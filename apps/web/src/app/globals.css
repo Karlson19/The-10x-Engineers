@@ -1,0 +1,223 @@
+@import "tailwindcss";
+
+/*
+  Dark mode is driven by a class on <html>, set by an inline script before
+  first paint so there is no flash. The script defaults to the operating
+  system preference and a manual toggle overrides it.
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Colour tokens
+   Values are HSL channels so they can be composed with alpha where needed.
+--------------------------------------------------------------------------- */
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;        /* #0F172A slate-900 */
+
+  --primary: 208 63% 16%;           /* #0F2942 navy */
+  --primary-hover: 213 51% 25%;     /* #1F3A5F */
+  --primary-foreground: 0 0% 100%;
+
+  --accent: 38 92% 50%;             /* #F59E0B amber */
+  --accent-strong: 26 90% 37%;      /* #B45309 for white text */
+  --accent-foreground: 222 47% 11%; /* dark text on amber */
+  --accent-subtle: 48 96% 89%;      /* #FEF3C7 badge fill */
+
+  --muted: 210 40% 96%;             /* #F1F5F9 */
+  --muted-foreground: 215 16% 47%;  /* #64748B */
+  --border: 214 32% 91%;            /* #E2E8F0 */
+
+  --success: 142 71% 45%;           /* #16A34A */
+  --warning: 38 92% 50%;
+  --destructive: 0 72% 51%;         /* #DC2626 */
+
+  --radius: 0.625rem;
+
+  /* Surfaces and controls that shadcn components expect, kept in the same family. */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 208 63% 16%;
+  --input: 214 32% 91%;
+  --ring: 208 63% 16%;
+  --success-foreground: 0 0% 100%;
+  --warning-foreground: 222 47% 11%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+/*
+  Dark mode is designed, not inverted. Navy deepens to near-black slate,
+  surfaces lift with a lighter slate rather than a shadow, and amber stays
+  the single accent.
+*/
+.dark {
+  --background: 222 47% 6%;
+  --foreground: 210 40% 96%;
+
+  --primary: 213 45% 24%;
+  --primary-hover: 213 45% 32%;
+  --primary-foreground: 210 40% 98%;
+
+  --accent: 38 92% 55%;
+  --accent-strong: 32 95% 44%;
+  --accent-foreground: 222 47% 11%;
+  --accent-subtle: 36 55% 17%;
+
+  --muted: 217 33% 13%;
+  --muted-foreground: 215 22% 71%;
+  --border: 217 28% 21%;
+
+  --success: 142 60% 50%;
+  --warning: 38 92% 55%;
+  --destructive: 0 70% 58%;
+
+  --card: 218 40% 9%;
+  --card-foreground: 210 40% 96%;
+  --popover: 218 40% 9%;
+  --popover-foreground: 210 40% 96%;
+  --secondary: 217 33% 15%;
+  --secondary-foreground: 210 40% 96%;
+  --input: 217 28% 24%;
+  --ring: 38 92% 55%;
+  --success-foreground: 222 47% 8%;
+  --warning-foreground: 222 47% 11%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+/* ---------------------------------------------------------------------------
+   Theme wiring
+--------------------------------------------------------------------------- */
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-strong: hsl(var(--accent-strong));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-subtle: hsl(var(--accent-subtle));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Scale from the build spec: 12 / 14 / 16 / 20 / 24 / 32 / 40. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 1.3;
+  --text-3xl: 2.5rem;
+  --text-3xl--line-height: 1.3;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    /* 16px minimum for reading text, because the screens are small and cheap. */
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+
+  /* Numbers, references, SKUs and registration plates line up in columns. */
+  .font-mono,
+  code,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) - 4px);
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent-subtle));
+    color: hsl(var(--accent-foreground));
+  }
+
+  /*
+    Global reduced motion. framer-motion handles component transitions through
+    MotionConfig, this covers CSS transitions and anything outside React.
+  */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

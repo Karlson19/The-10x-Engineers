@@ -1,0 +1,35 @@
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# environment
+.env
+.env.*
+!.env.example
+
+# next
+.vercel/
+next-env.d.ts
+
+# service worker build output (Serwist, from Phase 5)
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+
+# tooling
+coverage/
+.turbo/
+.eslintcache
+
+# editors and os
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

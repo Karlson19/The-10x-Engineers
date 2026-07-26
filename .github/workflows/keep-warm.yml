@@ -1,0 +1,26 @@
+name: Keep the API warm
+
+# Render free instances sleep after 15 minutes of no traffic and then take
+# close to a minute to answer the next request. This pings /health often
+# enough that a customer never lands on a cold start.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping the health endpoint
+    runs-on: ubuntu-latest
+    # Set the API_HEALTH_URL repository variable once the API is deployed,
+    # for example https://chrysmec-api.onrender.com/health
+    if: vars.API_HEALTH_URL != ''
+
+    steps:
+      - name: Request /health
+        run: |
+          status=$(curl --silent --show-error --max-time 60 \
+            --output /dev/null --write-out "%{http_code}" \
+            "${{ vars.API_HEALTH_URL }}")
+          echo "Health endpoint returned $status"
+          test "$status" = "200"

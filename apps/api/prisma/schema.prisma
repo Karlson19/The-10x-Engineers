@@ -1,0 +1,234 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  STAFF
+  MANAGEMENT
+}
+
+enum Section {
+  MECHANICAL
+  ELECTRICAL
+}
+
+enum RequestStatus {
+  SUBMITTED
+  SCHEDULED
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  COMPLETED
+  CANCELLED
+}
+
+enum JobStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum LineType {
+  PART
+  LABOUR
+}
+
+enum PaymentMethod {
+  PAYSTACK
+  MOMO
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  fullName     String
+  email        String    @unique
+  phone        String
+  passwordHash String
+  role         Role      @default(CLIENT)
+  section      Section?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  vehicles        Vehicle[]
+  serviceRequests ServiceRequest[] @relation("ClientRequests")
+  assignedJobs    Job[]            @relation("StaffJobs")
+  notifications   Notification[]
+
+  @@index([role])
+}
+
+model Vehicle {
+  id             String   @id @default(uuid())
+  ownerId        String
+  make           String
+  model          String
+  year           Int
+  registrationNo String
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  owner           User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  serviceRequests ServiceRequest[]
+
+  @@index([ownerId])
+}
+
+model ServiceRequest {
+  id                String        @id @default(uuid())
+  clientId          String
+  vehicleId         String
+  section           Section
+  status            RequestStatus @default(SUBMITTED)
+  preferredDateTime DateTime
+  locationText      String
+  latitude          Float?
+  longitude         Float?
+  symptomCategory   String
+  symptomDetails    Json
+  estimatedCost     Decimal?      @db.Decimal(10, 2)
+  clientRequestId   String        @unique
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  client            User               @relation("ClientRequests", fields: [clientId], references: [id])
+  vehicle           Vehicle            @relation(fields: [vehicleId], references: [id])
+  job               Job?
+  requestedServices RequestedService[]
+  payments          Payment[]
+  statusEvents      StatusEvent[]
+  feedback          Feedback?
+
+  @@index([clientId])
+  @@index([status])
+  @@index([section])
+}
+
+model Job {
+  id               String    @id @default(uuid())
+  serviceRequestId String    @unique
+  assignedStaffId  String
+  status           JobStatus @default(ASSIGNED)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  diagnosisNotes   String?
+  workSummary      String?
+  createdAt        DateTime  @default(now())
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  assignedStaff  User           @relation("StaffJobs", fields: [assignedStaffId], references: [id])
+  workLog        WorkLogEntry[]
+
+  @@index([assignedStaffId])
+}
+
+model ServiceCatalogItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  section     Section
+  basePrice   Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+
+  requestedServices RequestedService[]
+}
+
+model RequestedService {
+  id                   String @id @default(uuid())
+  serviceRequestId     String
+  serviceCatalogItemId String
+
+  serviceRequest     ServiceRequest     @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  serviceCatalogItem ServiceCatalogItem @relation(fields: [serviceCatalogItemId], references: [id])
+
+  @@unique([serviceRequestId, serviceCatalogItemId])
+}
+
+model InventoryItem {
+  id              String  @id @default(uuid())
+  name            String
+  sku             String  @unique
+  section         Section
+  quantityInStock Int     @default(0)
+  unitCost        Decimal @db.Decimal(10, 2)
+  reorderLevel    Int     @default(5)
+
+  workLogEntries WorkLogEntry[]
+}
+
+model WorkLogEntry {
+  id              String   @id @default(uuid())
+  jobId           String
+  inventoryItemId String?
+  lineType        LineType
+  description     String
+  quantity        Int
+  unitCost        Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+
+  job           Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+
+  @@index([jobId])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  serviceRequestId String
+  amount           Decimal       @db.Decimal(10, 2)
+  currency         String        @default("GHS")
+  method           PaymentMethod
+  status           PaymentStatus @default(PENDING)
+  reference        String        @unique
+  createdAt        DateTime      @default(now())
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id])
+}
+
+model StatusEvent {
+  id               String   @id @default(uuid())
+  serviceRequestId String
+  fromStatus       String?
+  toStatus         String
+  note             String?
+  createdAt        DateTime @default(now())
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  @@index([serviceRequestId])
+}
+
+model Feedback {
+  id               String   @id @default(uuid())
+  serviceRequestId String   @unique
+  rating           Int
+  comment          String?
+  createdAt        DateTime @default(now())
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}

@@ -1,0 +1,29 @@
+{
+  "name": "chrysmec",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrysmec Auto Center booking, workshop and analytics platform",
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev": "pnpm build:shared && pnpm --parallel --filter @chrysmec/shared --filter api --filter web dev",
+    "dev:api": "pnpm build:shared && pnpm --filter api dev",
+    "dev:web": "pnpm build:shared && pnpm --filter web dev",
+    "build": "pnpm build:shared && pnpm --filter api build && pnpm --filter web build",
+    "build:shared": "pnpm --filter @chrysmec/shared build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "test": "pnpm --filter api test",
+    "db:generate": "pnpm --filter api db:generate",
+    "db:migrate": "pnpm --filter api db:migrate",
+    "db:deploy": "pnpm --filter api db:deploy",
+    "db:seed": "pnpm --filter api db:seed",
+    "db:reset": "pnpm --filter api db:reset",
+    "db:studio": "pnpm --filter api db:studio"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
