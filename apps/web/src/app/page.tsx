@@ -1,27 +1,50 @@
-import { Clock, MapPin, Phone, Wrench, Zap } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Phone } from "lucide-react";
 import { BUSINESS, SECTION_LABELS, SECTIONS, type Section } from "@chrysmec/shared";
+import { Logo } from "@/components/brand/logo";
+import { StageDial } from "@/components/brand/stage-dial";
 import { SiteHeader } from "@/components/shared/site-header";
+import { buttonVariants } from "@/components/ui/button";
 
-const SECTION_COPY: Record<Section, { icon: typeof Wrench; summary: string; work: string[] }> = {
+const SECTION_COPY: Record<Section, { standfirst: string; work: readonly string[] }> = {
   MECHANICAL: {
-    icon: Wrench,
-    summary: "Engines, brakes, suspension, transmission and cooling.",
+    standfirst:
+      "Engines, brakes, suspension, transmission and cooling. The work that keeps a vehicle moving and stopping the way it should.",
     work: [
       "Full engine service and diagnostics",
       "Brake pads, discs and fluid",
       "Suspension, steering and clutch repair",
+      "Cooling system flush and hose replacement",
     ],
   },
   ELECTRICAL: {
-    icon: Zap,
-    summary: "Batteries, charging, starting, lighting and wiring faults.",
+    standfirst:
+      "Batteries, charging, starting, lighting and the intermittent faults that other workshops send back unsolved.",
     work: [
-      "Battery and alternator testing",
-      "Starter motor repair",
-      "Intermittent wiring faults traced",
+      "Battery and alternator testing under load",
+      "Starter motor repair and replacement",
+      "Wiring faults traced circuit by circuit",
+      "Air conditioning electrical repair",
     ],
   },
 };
+
+const PROCESS = [
+  {
+    title: "Tell us what it is doing",
+    body: "Guided questions about the noise, when it happens and how bad it is, so a technician knows what to expect before the vehicle arrives.",
+  },
+  {
+    title: "We diagnose and price it",
+    body: "Your job goes to the right section and the right technician. You see the estimate and approve it before any work starts.",
+  },
+  {
+    title: "Follow it through to ready",
+    body: "Every stage is recorded with a timestamp. No more calling to ask whether the car is done.",
+  },
+] as const;
+
+const phoneHref = `tel:${BUSINESS.phone.replace(/\s/g, "")}`;
 
 export default function HomePage() {
   return (
@@ -29,102 +52,142 @@ export default function HomePage() {
       <SiteHeader />
 
       <main id="main" className="flex-1">
-        <section className="border-b border-border bg-muted/40">
-          <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-            <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              Spintex Road, Accra
-            </p>
-            <h1 className="mt-4 max-w-2xl font-display text-2xl font-semibold text-foreground sm:text-3xl">
-              Vehicle repair and servicing, booked properly.
-            </h1>
-            <p className="mt-4 max-w-xl text-base text-muted-foreground">
-              Two sections, mechanical and electrical, one workshop. Tell us what the car is doing
-              and we will tell you what it needs, what it costs, and when it will be ready.
-            </p>
+        {/* Hero */}
+        <section className="paper-grain relative overflow-hidden border-b border-border">
+          <div className="mx-auto grid w-full max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-center lg:gap-8 lg:py-32">
+            <div className="rise-in lg:col-span-7">
+              <p className="eyebrow">
+                Mechanical and electrical | {BUSINESS.addressLines[0]}, {BUSINESS.city}
+              </p>
+              <h1 className="mt-5 max-w-[15ch] font-display text-4xl font-semibold text-balance text-foreground sm:text-5xl">
+                Your vehicle, handled by specialists.
+              </h1>
+              <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+                Tell us what the car is doing and we will tell you what it needs, what it costs, and
+                when it will be ready. No guesswork, no chasing us for an update.
+              </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href={`tel:${BUSINESS.phone.replace(/\s/g, "")}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-accent px-5 font-medium text-accent-foreground transition-colors hover:bg-accent-strong hover:text-white"
-              >
-                <Phone aria-hidden size={18} />
-                Call to book
-              </a>
-              <a
-                href="#what-we-work-on"
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-5 font-medium text-foreground transition-colors hover:border-muted-foreground/60 hover:bg-muted"
-              >
-                What we work on
-              </a>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link href="/register" className={buttonVariants({ variant: "accent" })}>
+                  Create an account
+                  <ArrowRight aria-hidden size={18} />
+                </Link>
+                <a href={phoneHref} className={buttonVariants({ variant: "outline" })}>
+                  <Phone aria-hidden size={18} />
+                  {BUSINESS.phone}
+                </a>
+              </div>
+            </div>
+
+            <div
+              className="pointer-events-none relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none"
+              aria-hidden
+            >
+              <StageDial className="opacity-90" />
             </div>
           </div>
         </section>
 
-        <section id="what-we-work-on" className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-          <h2 className="font-display text-xl font-semibold text-foreground">What we work on</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {SECTIONS.map((section) => {
-              const copy = SECTION_COPY[section];
-              const Icon = copy.icon;
+        {/* The two sections */}
+        <section id="what-we-work-on" className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+          <div className="border-b border-border py-14 sm:py-20">
+            <p className="eyebrow">What we work on</p>
+            <h2 className="mt-4 max-w-2xl font-display text-3xl font-semibold text-foreground">
+              Two sections, one workshop, one record of the job.
+            </h2>
+          </div>
 
-              return (
-                <article
-                  key={section}
-                  className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-muted-foreground/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex size-10 items-center justify-center rounded-md bg-accent-subtle text-accent-foreground">
-                      <Icon aria-hidden size={20} />
-                    </span>
-                    <h3 className="font-display text-lg font-semibold text-card-foreground">
-                      {SECTION_LABELS[section]}
-                    </h3>
-                  </div>
-                  <p className="mt-3 text-base text-muted-foreground">{copy.summary}</p>
-                  <ul className="mt-4 space-y-2 text-sm text-card-foreground">
+          {SECTIONS.map((section, index) => {
+            const copy = SECTION_COPY[section];
+
+            return (
+              <article
+                key={section}
+                className="grid gap-6 border-b border-border py-12 sm:py-16 lg:grid-cols-12 lg:gap-10"
+              >
+                <div className="lg:col-span-4">
+                  <span className="font-mono text-sm text-accent">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-2 font-display text-2xl font-semibold text-foreground">
+                    {SECTION_LABELS[section]}
+                  </h3>
+                </div>
+                <div className="lg:col-span-8">
+                  <p className="max-w-2xl text-lg text-muted-foreground">{copy.standfirst}</p>
+                  <ul className="mt-7 grid gap-x-10 gap-y-3 sm:grid-cols-2">
                     {copy.work.map((item) => (
-                      <li key={item} className="flex gap-2">
-                        <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" />
+                      <li
+                        key={item}
+                        className="flex gap-3 border-t border-border pt-3 text-base text-foreground"
+                      >
+                        <span
+                          aria-hidden
+                          className="mt-2.5 size-1.5 shrink-0 rounded-full bg-accent"
+                        />
                         {item}
                       </li>
                     ))}
                   </ul>
-                </article>
-              );
-            })}
-          </div>
+                </div>
+              </article>
+            );
+          })}
         </section>
 
-        <section id="visit" className="border-t border-border bg-muted/40">
-          <div className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 sm:py-16">
-            <div>
-              <h2 className="font-display text-xl font-semibold text-foreground">Visit the workshop</h2>
-              <address className="mt-4 space-y-1 not-italic text-base text-muted-foreground">
+        {/* How it works */}
+        <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+          <p className="eyebrow">How it works</p>
+          <h2 className="mt-4 max-w-2xl font-display text-3xl font-semibold text-foreground">
+            You always know where your vehicle is.
+          </h2>
+
+          <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-8">
+            {PROCESS.map((step, index) => (
+              <li key={step.title} className="border-t-2 border-foreground/85 pt-5">
+                <span className="font-mono text-sm text-muted-foreground">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-2 font-display text-xl font-semibold text-foreground">
+                  {step.title}
+                </h3>
+                <p className="mt-3 text-base text-muted-foreground">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* Visit */}
+        <section id="visit" className="border-t border-border bg-muted/50">
+          <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <p className="eyebrow">Visit the workshop</p>
+              <address className="mt-4 text-2xl font-normal not-italic font-display text-foreground">
                 {BUSINESS.addressLines.map((line) => (
-                  <span key={line} className="flex items-start gap-2">
-                    <MapPin aria-hidden size={18} className="mt-1 shrink-0 text-accent-strong" />
+                  <span key={line} className="block">
                     {line}
                   </span>
                 ))}
-                <span className="flex items-center gap-2 pt-2">
-                  <Phone aria-hidden size={18} className="shrink-0 text-accent-strong" />
-                  <a href={`tel:${BUSINESS.phone.replace(/\s/g, "")}`} className="font-mono">
-                    {BUSINESS.phone}
-                  </a>
-                </span>
               </address>
+              <a
+                href={phoneHref}
+                className="mt-6 inline-flex items-center gap-2 font-mono text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+              >
+                <Phone aria-hidden size={16} />
+                {BUSINESS.phone}
+              </a>
             </div>
 
-            <div>
-              <h2 className="font-display text-xl font-semibold text-foreground">Opening hours</h2>
-              <dl className="mt-4 space-y-2">
+            <div className="lg:col-span-7">
+              <p className="eyebrow">Opening hours</p>
+              <dl className="mt-4">
                 {BUSINESS.openingHours.map((entry) => (
-                  <div key={entry.days} className="flex items-center justify-between gap-4 text-base">
-                    <dt className="flex items-center gap-2 text-muted-foreground">
-                      <Clock aria-hidden size={18} className="shrink-0 text-accent-strong" />
-                      {entry.days}
-                    </dt>
-                    <dd className="font-mono text-sm text-foreground">{entry.hours}</dd>
+                  <div
+                    key={entry.days}
+                    className="flex items-baseline justify-between gap-6 border-b border-border py-4"
+                  >
+                    <dt className="text-base text-foreground">{entry.days}</dt>
+                    <dd className="font-mono text-sm text-muted-foreground">{entry.hours}</dd>
                   </div>
                 ))}
               </dl>
@@ -134,8 +197,11 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-border">
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted-foreground sm:px-6">
-          {BUSINESS.name}. {BUSINESS.tagline}
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <Logo className="text-foreground" />
+          <p className="font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">
+            {BUSINESS.tagline}
+          </p>
         </div>
       </footer>
     </div>

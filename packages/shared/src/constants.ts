@@ -62,12 +62,18 @@ export const REQUEST_STATUS_LABELS: Readonly<Record<RequestStatus, string>> = {
   CANCELLED: "Cancelled",
 };
 
-/** Business details shown on the public site and on printed invoices. */
+/**
+ * Business details shown on the public site and on printed invoices.
+ *
+ * The street line, phone number and email are placeholders until the real ones
+ * are confirmed. The city is correct: the workshop is in Kumasi.
+ */
 export const BUSINESS = {
   name: "Chrysmec Auto Center",
   tagline: "Vehicle repair and servicing, booked properly.",
-  addressLines: ["Spintex Road, Near Coastal Estates", "Accra, Greater Accra Region"],
-  phone: "+233 30 000 0000",
+  city: "Kumasi",
+  addressLines: ["Suame Magazine", "Kumasi, Ashanti Region"],
+  phone: "+233 32 000 0000",
   email: "hello@chrysmec.com",
   openingHours: [
     { days: "Monday to Friday", hours: "07:30 to 18:00" },

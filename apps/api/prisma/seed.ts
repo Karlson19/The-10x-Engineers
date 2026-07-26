@@ -316,11 +316,11 @@ const STATUS_NOTES: Readonly<Record<RequestStatus, string>> = {
 };
 
 const LOCATIONS: readonly string[] = [
-  "Chrysmec workshop, Spintex Road",
-  "Chrysmec workshop, Spintex Road",
-  "Customer address, East Legon",
-  "Customer address, Tema Community 5",
-  "Roadside, Tetteh Quarshie Interchange",
+  "Chrysmec workshop, Suame Magazine",
+  "Chrysmec workshop, Suame Magazine",
+  "Customer address, Ahodwo",
+  "Customer address, Asokwa",
+  "Roadside, Kumasi to Accra road",
 ];
 
 const DIAGNOSIS_NOTES: readonly string[] = [
@@ -560,8 +560,9 @@ async function main(): Promise<void> {
         status: plan.status,
         preferredDateTime,
         locationText: pick(LOCATIONS),
-        latitude: 5.6037 + (random() - 0.5) * 0.08,
-        longitude: -0.187 + (random() - 0.5) * 0.08,
+        // Scattered around Kumasi so the map view has something plausible on it.
+        latitude: 6.6885 + (random() - 0.5) * 0.08,
+        longitude: -1.6244 + (random() - 0.5) * 0.08,
         symptomCategory: symptom.category,
         symptomDetails: symptom.details,
         estimatedCost: hasEstimate ? money(estimatePesewas) : null,

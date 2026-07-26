@@ -1,6 +1,6 @@
 # Chrysmec Auto Center
 
-A progressive web app for a vehicle repair and servicing business in Accra. Customers book a
+A progressive web app for a vehicle repair and servicing business in Kumasi. Customers book a
 service through a guided symptom intake, the booking is routed to the mechanical or electrical
 section and assigned to a technician, staff log diagnosis, parts and labour against the job, and
 management gets live analytics on bookings, revenue, expenses and stock. It keeps working when
@@ -56,6 +56,32 @@ chrysmec/
 Request and response shapes are defined once as Zod schemas in `packages/shared` and imported by
 both apps. The API validates with them, client forms validate with them, and the OpenAPI document
 is generated from them. Types come from `z.infer`, never hand-written twice.
+
+## Design system
+
+The look is editorial and spacious: warm paper, deep ink, a serif that carries the headings, and
+enough whitespace that every element looks deliberate. Structure comes from hairline rules and
+vertical rhythm rather than boxes and shadows.
+
+| Token | Light | Dark | Used for |
+| --- | --- | --- | --- |
+| `--background` | `#FAF7F2` warm paper | `#16140F` warm near-black | Page surface |
+| `--foreground` | `#1C1917` ink | `#F3EEE5` | Body and headings |
+| `--primary` | `#17403A` deep pine | `#396B60` | Structure, panels, completed states |
+| `--accent` | `#A64B1B` copper | `#EB8B3D` | The one most important action, the current stage |
+| `--border` | `#E6DFD5` | warm charcoal | Hairline rules |
+
+Copper carries white text in light mode (5.7:1) and ink text in dark mode. Pine carries paper
+text (11.5:1). Every pairing clears WCAG AA.
+
+Type is **Fraunces** for display, **Public Sans** for body and UI, **JetBrains Mono** for
+references, SKUs, registration numbers and the small uppercase eyebrow labels. All three are
+self-hosted by `next/font`, subset to latin, so there is no blocking request to Google on 3G.
+
+The logo is a workshop seal that doubles as a C and as a progress ring: the ink arc is the
+monogram, the copper segment is the stage a job has reached. It is the same idea as the status
+timeline, reduced to something that still reads at 20px. The mark, the name and the mono
+descriptor travel together as a lockup, in `src/components/brand`.
 
 ## Prerequisites
 
@@ -143,11 +169,33 @@ Run these from the repository root.
 | `pnpm db:reset` | Drops, re-migrates and re-seeds the database |
 | `pnpm db:studio` | Opens Prisma Studio |
 
+## How authentication works
+
+- Passwords are hashed with **argon2id** at the OWASP floor: 19 MiB of memory, two passes.
+- Signing in returns a 15 minute **access token in the response body**, which the client holds in
+  a module variable. It is never written to localStorage or sessionStorage, so a cross-site
+  script cannot read it back.
+- The 7 day **refresh token is an httpOnly cookie**, invisible to JavaScript. After a page reload
+  the client calls `POST /auth/refresh` once to get a new access token, which is how the session
+  survives without storing anything readable in the browser.
+- Refresh **rotates** both tokens, so a leaked refresh token is only useful until the real client
+  next refreshes.
+- Every authenticated request reloads the account from the database, so role changes and
+  deactivations take effect immediately rather than when the token happens to expire.
+- Registration always creates a `CLIENT`. The schema has no role field, so a role sent by a
+  browser cannot be trusted or even read. Staff and management accounts are created by management
+  through `POST /users`.
+- `/auth/*` is rate limited to 10 requests per 15 minutes per IP.
+
 ## Testing
 
 ```bash
 pnpm test
 ```
+
+29 tests across three files cover the happy path, missing and invalid tokens, a refresh token
+presented as an access token, role based access control, the role escalation attempt on register,
+deactivated accounts, duplicate emails, refresh and logout, and the ownership guard.
 
 Tests run against a real PostgreSQL database using the `DATABASE_URL` in `apps/api/.env`. Point
 it at a throwaway database, not one holding data you care about. CI runs them against a
@@ -198,8 +246,9 @@ The build runs in phases and a phase does not start until the previous one runs.
 
 - [x] **Phase 1, Foundation.** Workspace, both apps scaffolded, shared package, Prisma schema,
       migration, seed script, health endpoint, CI, this README.
-- [ ] **Phase 2, Auth.** argon2 hashing, JWT issue, verify and refresh, auth and RBAC middleware,
-      the `/auth` routes, login and register screens.
+- [x] **Phase 2, Auth.** argon2id hashing, JWT issue, verify and refresh with rotation, auth and
+      RBAC middleware, the `/auth` and `/users` routes, login and register screens, the session
+      context and the protected route wrapper.
 - [ ] **Phase 3, Core CRUD.** Vehicles and service requests end to end, status transitions and the
       timeline, the booking wizard, request list and request detail.
 - [ ] **Phase 4, Staff and management.** Jobs, work log, inventory decrements, catalogue,

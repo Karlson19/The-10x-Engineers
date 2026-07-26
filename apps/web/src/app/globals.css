@@ -9,83 +9,84 @@
 
 /* ---------------------------------------------------------------------------
    Colour tokens
-   Values are HSL channels so they can be composed with alpha where needed.
+   Warm paper, deep ink, pine structure, copper accent. Values are HSL channels
+   so they can be composed with alpha where needed.
 --------------------------------------------------------------------------- */
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;        /* #0F172A slate-900 */
+  --background: 38 33% 97%;         /* #FAF7F2 warm paper */
+  --foreground: 30 10% 10%;         /* #1C1917 ink */
 
-  --primary: 208 63% 16%;           /* #0F2942 navy */
-  --primary-hover: 213 51% 25%;     /* #1F3A5F */
-  --primary-foreground: 0 0% 100%;
+  --primary: 166 46% 17%;           /* #17403A deep pine */
+  --primary-hover: 166 40% 24%;     /* #245C52 */
+  --primary-foreground: 38 33% 97%;
 
-  --accent: 38 92% 50%;             /* #F59E0B amber */
-  --accent-strong: 26 90% 37%;      /* #B45309 for white text */
-  --accent-foreground: 222 47% 11%; /* dark text on amber */
-  --accent-subtle: 48 96% 89%;      /* #FEF3C7 badge fill */
+  --accent: 20 72% 38%;             /* #A64B1B copper */
+  --accent-hover: 20 74% 31%;       /* #8A3D14 */
+  --accent-foreground: 0 0% 100%;   /* white text on copper */
+  --accent-subtle: 26 70% 93%;      /* #FAEDE3 badge fill */
+  --accent-on-dark: 24 80% 56%;     /* #EB8B3D copper that holds up on a pine or ink surface */
 
-  --muted: 210 40% 96%;             /* #F1F5F9 */
-  --muted-foreground: 215 16% 47%;  /* #64748B */
-  --border: 214 32% 91%;            /* #E2E8F0 */
-
-  --success: 142 71% 45%;           /* #16A34A */
-  --warning: 38 92% 50%;
-  --destructive: 0 72% 51%;         /* #DC2626 */
-
-  --radius: 0.625rem;
-
-  /* Surfaces and controls that shadcn components expect, kept in the same family. */
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card: 0 0% 100%;                /* white lifts off the paper background */
+  --card-foreground: 30 10% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 208 63% 16%;
-  --input: 214 32% 91%;
-  --ring: 208 63% 16%;
+  --popover-foreground: 30 10% 10%;
+  --secondary: 36 25% 94%;
+  --secondary-foreground: 166 46% 17%;
+
+  --muted: 36 25% 94%;              /* #F2EEE7 */
+  --muted-foreground: 30 7% 38%;    /* #67615C */
+  --border: 34 20% 88%;             /* #E6DFD5 hairline */
+  --input: 34 20% 82%;
+  --ring: 20 72% 38%;
+
+  --success: 155 50% 30%;           /* #26735B */
   --success-foreground: 0 0% 100%;
-  --warning-foreground: 222 47% 11%;
+  --warning: 36 80% 42%;            /* #C1841A */
+  --warning-foreground: 0 0% 100%;
+  --destructive: 4 65% 42%;         /* #B0332A */
   --destructive-foreground: 0 0% 100%;
+
+  --radius: 0.5rem;
 }
 
 /*
-  Dark mode is designed, not inverted. Navy deepens to near-black slate,
-  surfaces lift with a lighter slate rather than a shadow, and amber stays
-  the single accent.
+  Dark mode is designed, not inverted. Paper becomes a warm near-black, surfaces
+  lift with a lighter warm charcoal rather than a shadow, pine lightens so it
+  still reads as a colour, and copper brightens to stay the accent.
 */
 .dark {
-  --background: 222 47% 6%;
-  --foreground: 210 40% 96%;
+  --background: 30 8% 8%;           /* #16140F */
+  --foreground: 38 30% 94%;         /* #F3EEE5 */
 
-  --primary: 213 45% 24%;
-  --primary-hover: 213 45% 32%;
-  --primary-foreground: 210 40% 98%;
+  --primary: 166 30% 32%;           /* #396B60 */
+  --primary-hover: 166 30% 40%;
+  --primary-foreground: 38 30% 96%;
 
-  --accent: 38 92% 55%;
-  --accent-strong: 32 95% 44%;
-  --accent-foreground: 222 47% 11%;
-  --accent-subtle: 36 55% 17%;
+  --accent: 24 80% 56%;             /* #EB8B3D */
+  --accent-hover: 24 80% 64%;
+  --accent-foreground: 30 10% 10%;  /* ink text on bright copper */
+  --accent-subtle: 22 40% 18%;
 
-  --muted: 217 33% 13%;
-  --muted-foreground: 215 22% 71%;
-  --border: 217 28% 21%;
+  --card: 30 8% 11%;
+  --card-foreground: 38 30% 94%;
+  --popover: 30 8% 11%;
+  --popover-foreground: 38 30% 94%;
+  --secondary: 30 7% 16%;
+  --secondary-foreground: 38 30% 94%;
 
-  --success: 142 60% 50%;
-  --warning: 38 92% 55%;
-  --destructive: 0 70% 58%;
+  --muted: 30 7% 15%;
+  --muted-foreground: 36 12% 70%;
+  --border: 30 8% 22%;
+  --input: 30 8% 26%;
+  --ring: 24 80% 56%;
 
-  --card: 218 40% 9%;
-  --card-foreground: 210 40% 96%;
-  --popover: 218 40% 9%;
-  --popover-foreground: 210 40% 96%;
-  --secondary: 217 33% 15%;
-  --secondary-foreground: 210 40% 96%;
-  --input: 217 28% 24%;
-  --ring: 38 92% 55%;
-  --success-foreground: 222 47% 8%;
-  --warning-foreground: 222 47% 11%;
-  --destructive-foreground: 0 0% 100%;
+  --success: 155 40% 48%;
+  --success-foreground: 30 8% 8%;
+  --warning: 36 75% 58%;
+  --warning-foreground: 30 8% 8%;
+  --destructive: 4 65% 58%;
+  --destructive-foreground: 30 8% 8%;
 }
 
 /* ---------------------------------------------------------------------------
@@ -101,9 +102,10 @@
   --color-primary-foreground: hsl(var(--primary-foreground));
 
   --color-accent: hsl(var(--accent));
-  --color-accent-strong: hsl(var(--accent-strong));
+  --color-accent-hover: hsl(var(--accent-hover));
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-accent-subtle: hsl(var(--accent-subtle));
+  --color-accent-on-dark: hsl(var(--accent-on-dark));
 
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
@@ -125,30 +127,34 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: calc(var(--radius) - 1px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
   --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
-  /* Scale from the build spec: 12 / 14 / 16 / 20 / 24 / 32 / 40. */
+  /* Scale from the build spec: 12 / 14 / 16 / 18 / 20 / 24 / 32 / 40 / 56. */
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.5;
   --text-sm: 0.875rem;
   --text-sm--line-height: 1.5;
   --text-base: 1rem;
   --text-base--line-height: 1.6;
-  --text-lg: 1.25rem;
-  --text-lg--line-height: 1.4;
-  --text-xl: 1.5rem;
-  --text-xl--line-height: 1.3;
-  --text-2xl: 2rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.6;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.5rem;
   --text-2xl--line-height: 1.3;
-  --text-3xl: 2.5rem;
-  --text-3xl--line-height: 1.3;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.2;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.15;
+  --text-5xl: 3.5rem;
+  --text-5xl--line-height: 1.05;
 }
 
 /* ---------------------------------------------------------------------------
@@ -198,12 +204,12 @@
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
-    border-radius: calc(var(--radius) - 4px);
+    border-radius: calc(var(--radius) - 3px);
   }
 
   ::selection {
     background-color: hsl(var(--accent-subtle));
-    color: hsl(var(--accent-foreground));
+    color: hsl(var(--foreground));
   }
 
   /*
@@ -218,6 +224,65 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities
+--------------------------------------------------------------------------- */
+
+@layer utilities {
+  /* The small uppercase mono label that sits above a heading. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Very fine paper grain. Adds warmth up close and costs one inline SVG. */
+  .paper-grain {
+    position: relative;
+  }
+
+  .paper-grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+  }
+
+  .dark .paper-grain::before {
+    opacity: 0.35;
+  }
+
+  /*
+    Entrance used on the landing page. It runs after first paint and only moves
+    transform and opacity, so it never delays the content appearing.
+  */
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .rise-in {
+    animation: rise-in 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise-in {
+      animation: none;
     }
   }
 }

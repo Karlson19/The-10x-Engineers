@@ -7,11 +7,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: `${BUSINESS.name}, vehicle repair and servicing in Accra`,
+    default: `${BUSINESS.name}, vehicle repair and servicing in ${BUSINESS.city}`,
     template: `%s | ${BUSINESS.name}`,
   },
-  description:
-    "Book mechanical and electrical vehicle repair with Chrysmec Auto Center in Accra, and follow the job from booking to handover.",
+  description: `Book mechanical and electrical vehicle repair with ${BUSINESS.name} in ${BUSINESS.city}, and follow the job from booking to handover.`,
   applicationName: BUSINESS.name,
 };
 
@@ -19,8 +18,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0F2942" },
-    { media: "(prefers-color-scheme: dark)", color: "#080F1A" },
+    { media: "(prefers-color-scheme: light)", color: "#FAF7F2" },
+    { media: "(prefers-color-scheme: dark)", color: "#16140F" },
   ],
 };
 
