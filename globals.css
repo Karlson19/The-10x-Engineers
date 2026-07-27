@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* No external font loading (build environment has no Google Fonts access) --
+   the "display" personality comes from weight/tracking/case treatment on
+   the system stack rather than a bespoke webfont. */
+:root {
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-paper text-ink antialiased;
+  }
+  ::selection {
+    @apply bg-staff/30;
+  }
+  :focus-visible {
+    outline: 2px solid #b9791e;
+    outline-offset: 2px;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display font-black tracking-tight;
+  }
+}
+
+@layer utilities {
+  .label-eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint;
+  }
+  .stamp {
+    @apply font-mono text-[11px] uppercase tracking-[0.08em];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
