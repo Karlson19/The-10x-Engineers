@@ -316,10 +316,10 @@ const STATUS_NOTES: Readonly<Record<RequestStatus, string>> = {
 };
 
 const LOCATIONS: readonly string[] = [
-  "Chrysmec workshop, Suame Magazine",
-  "Chrysmec workshop, Suame Magazine",
-  "Customer address, Ahodwo",
-  "Customer address, Asokwa",
+  "Chrysmec workshop, Kumasi",
+  "Chrysmec workshop, Kumasi",
+  "Customer address, Kumasi",
+  "Customer address, Kumasi",
   "Roadside, Kumasi to Accra road",
 ];
 

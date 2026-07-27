@@ -8,17 +8,16 @@ import {
   signOut,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middleware/authenticate";
-import { authRateLimiter } from "../middleware/rate-limit";
+import { credentialRateLimiter, sessionRateLimiter } from "../middleware/rate-limit";
 
 export const authRouter: Router = Router();
 
-// Every auth route is rate limited by IP, including the ones that only read.
-authRouter.use(authRateLimiter);
+// Anything that takes a password is held to the strict budget.
+authRouter.post("/register", credentialRateLimiter, register);
+authRouter.post("/login", credentialRateLimiter, signIn);
+authRouter.post("/change-password", credentialRateLimiter, authenticate, changePassword);
 
-authRouter.post("/register", register);
-authRouter.post("/login", signIn);
-authRouter.post("/refresh", refresh);
-authRouter.post("/logout", signOut);
-
-authRouter.get("/me", authenticate, me);
-authRouter.post("/change-password", authenticate, changePassword);
+// Session upkeep is ordinary traffic, so it gets its own generous ceiling.
+authRouter.post("/refresh", sessionRateLimiter, refresh);
+authRouter.post("/logout", sessionRateLimiter, signOut);
+authRouter.get("/me", sessionRateLimiter, authenticate, me);

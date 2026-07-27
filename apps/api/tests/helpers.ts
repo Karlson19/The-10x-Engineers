@@ -46,7 +46,42 @@ export async function createTestUser(options: {
   return { id: user.id, email: user.email, password };
 }
 
+export async function createTestVehicle(
+  ownerId: string,
+  overrides: Partial<{ make: string; model: string; year: number; registrationNo: string }> = {},
+): Promise<{ id: string; registrationNo: string }> {
+  const registrationNo =
+    overrides.registrationNo ?? `GT ${Math.floor(1000 + Math.random() * 8999)}-24`;
+
+  const vehicle = await prisma.vehicle.create({
+    data: {
+      ownerId,
+      make: overrides.make ?? "Toyota",
+      model: overrides.model ?? "Corolla",
+      year: overrides.year ?? 2018,
+      registrationNo,
+    },
+  });
+
+  return { id: vehicle.id, registrationNo: vehicle.registrationNo };
+}
+
+/**
+ * Service requests hold a required reference to their client and vehicle, so
+ * they have to go before the accounts that own them.
+ */
 export async function deleteTestUsers(): Promise<void> {
+  const users = await prisma.user.findMany({
+    where: { email: { contains: TEST_EMAIL_MARKER } },
+    select: { id: true },
+  });
+  const ids = users.map((user) => user.id);
+
+  if (ids.length > 0) {
+    await prisma.serviceRequest.deleteMany({ where: { clientId: { in: ids } } });
+    await prisma.vehicle.deleteMany({ where: { ownerId: { in: ids } } });
+  }
+
   await prisma.user.deleteMany({ where: { email: { contains: TEST_EMAIL_MARKER } } });
 }
 

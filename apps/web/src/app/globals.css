@@ -201,6 +201,21 @@
     font-feature-settings: "tnum" 1;
   }
 
+  /*
+    Chrome paints its own background on autofilled fields, picked from the
+    operating system theme rather than ours, which can leave dark text on a
+    dark fill. This holds the field to the app's colours.
+  */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--card)) inset;
+    caret-color: hsl(var(--foreground));
+    /* Long transition is the usual way to stop the yellow flash on load. */
+    transition: background-color 100000s ease-in-out 0s;
+  }
+
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
@@ -278,6 +293,45 @@
 
   .rise-in {
     animation: rise-in 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /*
+    Validation feedback. Only the offending field shakes, never the whole form,
+    and it happens once rather than looping.
+  */
+  @keyframes field-shake {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    25% {
+      transform: translate3d(-6px, 0, 0);
+    }
+    50% {
+      transform: translate3d(6px, 0, 0);
+    }
+    75% {
+      transform: translate3d(-3px, 0, 0);
+    }
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .field-shake {
+    animation: field-shake 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field-shake {
+      animation: none;
+    }
+  }
+
+  /* Skeleton shimmer. Transform only, so it stays cheap on a mid-range phone. */
+  @keyframes shimmer {
+    to {
+      transform: translateX(100%);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

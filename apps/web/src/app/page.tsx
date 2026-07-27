@@ -56,9 +56,7 @@ export default function HomePage() {
         <section className="paper-grain relative overflow-hidden border-b border-border">
           <div className="mx-auto grid w-full max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-center lg:gap-8 lg:py-32">
             <div className="rise-in lg:col-span-7">
-              <p className="eyebrow">
-                Mechanical and electrical | {BUSINESS.addressLines[0]}, {BUSINESS.city}
-              </p>
+              <p className="eyebrow">Mechanical and electrical | {BUSINESS.city}</p>
               <h1 className="mt-5 max-w-[15ch] font-display text-4xl font-semibold text-balance text-foreground sm:text-5xl">
                 Your vehicle, handled by specialists.
               </h1>

@@ -193,9 +193,36 @@ Run these from the repository root.
 pnpm test
 ```
 
-29 tests across three files cover the happy path, missing and invalid tokens, a refresh token
+49 tests across four files cover the happy path, missing and invalid tokens, a refresh token
 presented as an access token, role based access control, the role escalation attempt on register,
-deactivated accounts, duplicate emails, refresh and logout, and the ownership guard.
+deactivated accounts, duplicate emails, refresh and logout, the ownership guard, full CRUD on a
+service request, section scoping for technicians, rejected status transitions, the timeline, the
+guided intake validation, vehicle CRUD, and idempotency including two copies of the same booking
+arriving at once.
+
+Tests run against a real database, so they are latency bound rather than slow. Against a hosted
+database such as Neon the suite takes a few minutes; in CI, against a local Postgres container,
+it is far quicker.
+
+## The booking workflow
+
+This is the graded Sprint 1 workflow, running from the browser to the database and back.
+
+1. **Guided symptom intake.** The section chooses the categories, the category chooses the
+   questions, and some answers open follow up questions. Defined once in
+   `packages/shared/src/symptoms.ts`, so the wizard and the API validate against the same
+   definition and a technician gets usable detail before the vehicle arrives.
+2. **Five step wizard** with a progress indicator, direction aware transitions, and per field
+   validation. State is kept in local storage, so a dropped connection or an accidental refresh
+   in a car park never loses what someone has typed.
+3. **Idempotent submit.** Every booking carries a `clientRequestId` generated on the device
+   before it is sent. The server treats it as an idempotency key: a repeat returns the original
+   record with 200 rather than creating a second booking. This is what the Phase 5 offline outbox
+   will rely on, and it is already tested, including two copies arriving at the same moment.
+4. **Status timeline.** Every status change writes a `StatusEvent` with a timestamp and an
+   optional note. The customer sees it as a vertical stepper: completed stages in pine with a
+   drawn checkmark, the current stage in copper with a soft pulsing ring, later stages muted.
+   Transitions are enforced on the server and an invalid one is refused with 400.
 
 Tests run against a real PostgreSQL database using the `DATABASE_URL` in `apps/api/.env`. Point
 it at a throwaway database, not one holding data you care about. CI runs them against a
@@ -249,8 +276,10 @@ The build runs in phases and a phase does not start until the previous one runs.
 - [x] **Phase 2, Auth.** argon2id hashing, JWT issue, verify and refresh with rotation, auth and
       RBAC middleware, the `/auth` and `/users` routes, login and register screens, the session
       context and the protected route wrapper.
-- [ ] **Phase 3, Core CRUD.** Vehicles and service requests end to end, status transitions and the
-      timeline, the booking wizard, request list and request detail.
+- [x] **Phase 3, Core CRUD.** Vehicles and service requests end to end, server enforced status
+      transitions and the timeline, the guided symptom intake, the booking wizard, the request
+      list and the request detail screen. This completes the graded Sprint 1 requirement: one full
+      user-facing workflow from frontend to API to database and back.
 - [ ] **Phase 4, Staff and management.** Jobs, work log, inventory decrements, catalogue,
       analytics, the staff job queue and the management dashboard.
 - [ ] **Phase 5, Offline and polish.** Service worker, Dexie outbox, sync, notifications, feedback,

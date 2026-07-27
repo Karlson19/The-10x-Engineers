@@ -65,14 +65,15 @@ export const REQUEST_STATUS_LABELS: Readonly<Record<RequestStatus, string>> = {
 /**
  * Business details shown on the public site and on printed invoices.
  *
- * The street line, phone number and email are placeholders until the real ones
- * are confirmed. The city is correct: the workshop is in Kumasi.
+ * The phone number and email are placeholders until the real ones are
+ * confirmed, and there is no street line yet on purpose rather than an
+ * invented one. The city is correct: the workshop is in Kumasi.
  */
 export const BUSINESS = {
   name: "Chrysmec Auto Center",
   tagline: "Vehicle repair and servicing, booked properly.",
   city: "Kumasi",
-  addressLines: ["Suame Magazine", "Kumasi, Ashanti Region"],
+  addressLines: ["Kumasi, Ashanti Region"],
   phone: "+233 32 000 0000",
   email: "hello@chrysmec.com",
   openingHours: [

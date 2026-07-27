@@ -1,16 +1,16 @@
-import { AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { CircleAlert, CircleCheck, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AlertTone = "error" | "success" | "info";
 
-const TONE_STYLES: Record<AlertTone, { container: string; icon: typeof AlertCircle }> = {
+const TONE_STYLES: Record<AlertTone, { container: string; icon: typeof CircleAlert }> = {
   error: {
     container: "border-destructive/40 bg-destructive/10 text-foreground",
-    icon: AlertCircle,
+    icon: CircleAlert,
   },
   success: {
     container: "border-success/40 bg-success/10 text-foreground",
-    icon: CheckCircle2,
+    icon: CircleCheck,
   },
   info: {
     container: "border-border bg-muted text-foreground",

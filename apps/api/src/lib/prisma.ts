@@ -17,3 +17,15 @@ export const prisma =
 if (!env.isProduction) {
   globalForPrisma.prisma = prisma;
 }
+
+/**
+ * Prisma gives an interactive transaction 5 seconds by default, measured from
+ * the moment it opens. The database is hosted in Europe and the users are in
+ * Ghana, so a handful of round trips inside one transaction can pass that
+ * ceiling on a normal connection and fail a booking that was perfectly valid.
+ * These allow for that latency without letting a stuck transaction sit open.
+ */
+export const TRANSACTION_OPTIONS = {
+  maxWait: 10_000,
+  timeout: 20_000,
+} as const;
