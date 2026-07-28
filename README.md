@@ -240,14 +240,65 @@ deployed, otherwise the job skips itself.
 
 ## Deployment
 
-- **Vercel**, root directory `apps/web`, environment variable `NEXT_PUBLIC_API_URL`.
-- **Render**, root directory `apps/api`.
-  Build: `pnpm install && pnpm --filter api build && pnpm --filter api prisma migrate deploy`.
-  Start: `pnpm --filter api start`.
-- **Neon**, `DATABASE_URL` set to the pooled connection string.
+Three services: the database on Neon, the API on Render, the web app on Vercel. Deploy them in
+that order, because each one needs the address of the one before it.
 
-Render free instances sleep after 15 minutes of no traffic. Warm the API by hand before any demo
-as well as relying on the scheduled ping.
+### 1. Database, Neon
+
+Create a project and copy the connection string. Use the **direct** endpoint, not the pooled one.
+Prisma migrations do not run reliably through PgBouncer, and a long-running Express server gains
+nothing from a connection pooler.
+
+### 2. API, Render
+
+The repository has a `render.yaml` blueprint, so Render can create the service itself: New →
+Blueprint → pick this repository. It sets the build command, the start command and the
+`/health` check, and it generates both JWT secrets so no secret has to be typed or pasted
+anywhere.
+
+You are asked for two values:
+
+- `DATABASE_URL`, the Neon string from step 1
+- `CORS_ORIGIN`, the Vercel URL from step 3, with no trailing slash. Leave it as
+  `http://localhost:3000` for now and come back to it.
+
+To set the service up by hand instead, leave the root directory as the repository root, because
+this is a pnpm workspace, and use:
+
+```
+Build:  corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build && pnpm --filter api exec prisma migrate deploy
+Start:  pnpm --filter api start
+Health: /health
+```
+
+Load the demo data once the service is live, from the Render shell:
+
+```bash
+pnpm --filter api db:seed
+```
+
+### 3. Web app, Vercel
+
+New Project → import this repository, then:
+
+- **Root directory**: `apps/web`
+- **Environment variable**: `NEXT_PUBLIC_API_URL` set to the Render URL plus the version prefix,
+  for example `https://chrysmec-api.onrender.com/api/v1`
+
+Leave the framework preset, the build command and the install command on their defaults. The
+build script in `apps/web` compiles the shared package before running `next build`, so nothing
+extra is needed for the workspace.
+
+### 4. Close the loop
+
+Go back to Render and set `CORS_ORIGIN` to the Vercel URL, with no trailing slash. Until you do,
+the browser blocks every API call and sign in fails with a network error.
+
+Then set the `API_HEALTH_URL` repository variable on GitHub to the Render health endpoint, which
+switches on the scheduled ping.
+
+Render free instances sleep after 15 minutes of no traffic and take close to a minute to answer
+the next request. Warm the API by hand before any demo as well as relying on the scheduled ping.
 
 ## Environment variables
 
