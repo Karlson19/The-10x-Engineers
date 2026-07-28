@@ -9,6 +9,33 @@ the network drops and syncs when it comes back.
 Primary users are on mid-range Android phones over 3G and 4G, so every performance and design
 decision is made for the phone first.
 
+## Live demo
+
+**https://chrysmec.vercel.app**
+
+Sign in with any of these. The password for all of them is `Chrysmec#2026`.
+
+| Role | Email | What you land on |
+| --- | --- | --- |
+| Management | ama.boateng@chrysmec.com | Analytics dashboard, requests, inventory |
+| Staff, mechanical | kwame.mensah@chrysmec.com | Job queue and the work log editor |
+| Staff, electrical | yaw.owusu@chrysmec.com | The same, for the electrical section |
+| Customer | akosua.danso@example.com | Booking wizard, requests, status timeline |
+
+These accounts hold demo data only.
+
+The API runs on a free Render instance, which sleeps after 15 minutes of no traffic. **The first
+request after a quiet spell takes about 50 seconds**, so if sign in seems to hang, wait and try
+again. Everything is quick once it is awake.
+
+Worth looking at: the **status timeline** on a customer's request, the **guided symptom intake**
+in the booking wizard, and the **work log editor** on a staff job, where adding a part takes it
+out of stock as you watch. On the management dashboard, pick an earlier month from the period
+selector: the current month is usually thin, because most completed work in the demo data sits
+further back.
+
+API health: https://chrysmec-api.onrender.com/health
+
 ## Stack
 
 | Layer | Choice |
