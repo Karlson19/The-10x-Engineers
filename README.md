@@ -1,5 +1,13 @@
 # Chrysmec Auto Center
 
+### [Try the live app](https://chrysmec.vercel.app)
+
+[![Live demo](https://img.shields.io/badge/Live%20demo-chrysmec.vercel.app-A64B1B?style=for-the-badge)](https://chrysmec.vercel.app)
+[![API health](https://img.shields.io/badge/API-health-17403A?style=for-the-badge)](https://chrysmec-api.onrender.com/health)
+
+Sign in with `ama.boateng@chrysmec.com` and the password `Chrysmec#2026` to see the management
+dashboard. Other accounts are listed further down.
+
 A progressive web app for a vehicle repair and servicing business in Kumasi. Customers book a
 service through a guided symptom intake, the booking is routed to the mechanical or electrical
 section and assigned to a technician, staff log diagnosis, parts and labour against the job, and

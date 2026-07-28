@@ -1,12 +1,22 @@
+"use client";
+
+import { useBrandLogos } from "@/hooks/use-brand-logos";
 import { makeInitials, makeTint } from "@/lib/vehicle-catalogue";
 import { cn } from "@/lib/utils";
 
+/** Simple Icons draws everything on a 24 by 24 grid. */
+const VIEWBOX = "0 0 24 24";
+
 /**
- * A brand tile drawn from the manufacturer's name. Real manufacturer logos are
- * trademarks and we have no licence to redistribute them, so the mark is the
- * initials set in the mono face on a tint picked deterministically from a small
- * on-brand palette. It stays recognisable in a list without turning the picker
- * into a rainbow, and it costs no image request on a 3G connection.
+ * The manufacturer's mark where we have it, the initials where we do not.
+ *
+ * Drawn in a single colour rather than in brand colours: it keeps the picker
+ * from turning into a rainbow, it sits properly in both light and dark mode,
+ * and a monochrome mark used to label a make cannot be mistaken for a
+ * manufacturer endorsing this workshop.
+ *
+ * The monogram shows first and the logo replaces it once the path data has
+ * loaded, so nothing waits on a download.
  */
 export function BrandMark({
   make,
@@ -17,11 +27,14 @@ export function BrandMark({
   className?: string;
   size?: "default" | "sm";
 }) {
+  const logos = useBrandLogos();
   const trimmed = make.trim();
 
   if (trimmed.length === 0) {
     return null;
   }
+
+  const path = logos?.[trimmed];
 
   return (
     <span
@@ -33,7 +46,18 @@ export function BrandMark({
         className,
       )}
     >
-      {makeInitials(trimmed)}
+      {path ? (
+        <svg
+          viewBox={VIEWBOX}
+          className={size === "sm" ? "size-4" : "size-5"}
+          fill="currentColor"
+          role="presentation"
+        >
+          <path d={path} />
+        </svg>
+      ) : (
+        makeInitials(trimmed)
+      )}
     </span>
   );
 }
