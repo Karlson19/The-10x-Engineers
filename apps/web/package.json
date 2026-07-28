@@ -5,7 +5,7 @@
   "description": "Chrysmec Auto Center progressive web app",
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "pnpm --filter @chrysmec/shared build && next build",
     "start": "next start --port 3000",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
