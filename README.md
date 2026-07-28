@@ -366,9 +366,16 @@ The build runs in phases and a phase does not start until the previous one runs.
       transitions and the timeline, the guided symptom intake, the booking wizard, the request
       list and the request detail screen. This completes the graded Sprint 1 requirement: one full
       user-facing workflow from frontend to API to database and back.
-- [ ] **Phase 4, Staff and management.** Jobs, work log, inventory decrements, catalogue,
-      analytics, the staff job queue and the management dashboard.
-- [ ] **Phase 5, Offline and polish.** Service worker, Dexie outbox, sync, notifications, feedback,
-      every loading, empty and error state, accessibility and Lighthouse passes.
-- [ ] **Phase 6, Integrations and deploy.** Paystack test mode, Africa's Talking SMS sandbox, and
-      deployment of all three services.
+- [x] **Phase 4, Staff and management.** Jobs, the work log with atomic stock decrements, the
+      inventory and catalogue routes, the analytics endpoint, the staff job queue and job detail,
+      and the management dashboard with charts.
+- [x] **Phase 5, Offline and polish.** Serwist service worker, the Dexie outbox with idempotent
+      sync, the offline banner and pending badges, notifications and feedback, and the loading,
+      empty and error states.
+- [ ] **Phase 6, Integrations and deploy.** All three services are deployed and live. Paystack test
+      mode and the Africa's Talking SMS sandbox are not started, and the payment routes in the API
+      contract do not exist yet.
+
+Still outstanding beyond the phase list: an accessibility and Lighthouse pass against the targets
+in the definition of done, and a separate database for local work, because development and the
+live demo currently share one Neon instance.
