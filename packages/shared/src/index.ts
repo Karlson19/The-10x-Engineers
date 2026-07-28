@@ -11,3 +11,5 @@ export * from "./schemas/service-request";
 export * from "./schemas/inventory";
 export * from "./schemas/job";
 export * from "./schemas/analytics";
+export * from "./schemas/notification";
+export * from "./schemas/feedback";

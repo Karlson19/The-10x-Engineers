@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { ApiError } from "@/lib/api/client";
 import { homeForRole, safeRedirect } from "@/lib/auth/routes";
 
@@ -67,12 +68,7 @@ export function LoginForm() {
 
       <FormField id="password" label="Password" error={errors.password?.message}>
         {(field) => (
-          <Input
-            {...field}
-            {...register("password")}
-            type="password"
-            autoComplete="current-password"
-          />
+          <PasswordInput {...field} {...register("password")} autoComplete="current-password" />
         )}
       </FormField>
 

@@ -2,6 +2,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { AppProviders } from "@/components/providers/app-providers";
 import { AppHeader } from "@/components/shared/app-header";
 import { BottomTabBar, DesktopNav } from "@/components/shared/client-nav";
+import { OfflineBanner } from "@/components/shared/offline-banner";
 
 /**
  * Everything under /dashboard is behind the session. RequireAuth keeps people
@@ -12,6 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <AppProviders>
       <div className="flex min-h-dvh flex-col">
+        <OfflineBanner />
         <AppHeader />
         <DesktopNav />
         {/* Room for the tab bar so it never sits on top of the last row. */}

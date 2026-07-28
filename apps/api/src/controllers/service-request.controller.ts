@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import {
+  createFeedbackSchema,
   createServiceRequestSchema,
   idParamSchema,
   serviceRequestListQuerySchema,
@@ -7,6 +8,7 @@ import {
   updateStatusSchema,
 } from "@chrysmec/shared";
 import { requireAuthUser } from "../middleware/authenticate";
+import { createFeedback, getFeedback } from "../services/feedback.service";
 import {
   createServiceRequest,
   deleteServiceRequest,
@@ -64,6 +66,21 @@ export const remove: RequestHandler = async (req, res) => {
 
   await deleteServiceRequest(user, id);
   res.status(204).send();
+};
+
+export const leaveFeedback: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
+  const { id } = idParamSchema.parse(req.params);
+  const input = createFeedbackSchema.parse(req.body);
+
+  res.status(201).json({ feedback: await createFeedback(user, id, input) });
+};
+
+export const readFeedback: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
+  const { id } = idParamSchema.parse(req.params);
+
+  res.status(200).json({ feedback: await getFeedback(user, id) });
 };
 
 export const timeline: RequestHandler = async (req, res) => {

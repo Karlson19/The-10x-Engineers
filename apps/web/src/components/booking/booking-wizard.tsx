@@ -20,6 +20,10 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCatalogue, useCreateServiceRequest } from "@/hooks/use-service-requests";
+import { useOffline } from "@/components/providers/offline-provider";
+import { useToast } from "@/components/ui/toast";
+import { isOutboxAvailable } from "@/lib/offline/db";
+import { enqueueBooking } from "@/lib/offline/outbox";
 import { useVehicles } from "@/hooks/use-vehicles";
 import { ApiError } from "@/lib/api/client";
 import { motionTokens } from "@/lib/motion";
@@ -43,6 +47,8 @@ export function BookingWizard() {
   const vehicles = useVehicles();
   const catalogue = useCatalogue(draft.section);
   const createMutation = useCreateServiceRequest();
+  const { isOnline, refreshPending } = useOffline();
+  const { showToast } = useToast();
 
   const selectedVehicle = useMemo(
     () => vehicles.data?.data.find((vehicle) => vehicle.id === draft.vehicleId),
@@ -152,16 +158,57 @@ export function BookingWizard() {
       locationText: draft.locationText.trim(),
     };
 
+    /**
+     * Offline, the booking goes into the outbox and we return straight away.
+     * The customer is standing next to a car with no signal: making them wait
+     * for a timeout and then retype everything would be the whole problem this
+     * app exists to solve.
+     */
+    if (!isOnline) {
+      await queueBooking(payload);
+      return;
+    }
+
     try {
       const created = await createMutation.mutateAsync(payload);
       reset();
       router.replace(`/dashboard/requests/${created.id}?booked=1`);
     } catch (error) {
+      // The connection went between opening the form and pressing send. Queue
+      // it rather than losing it.
+      if (error instanceof ApiError && error.code === "NETWORK_ERROR") {
+        await queueBooking(payload);
+        return;
+      }
+
       setFormError(
         error instanceof ApiError
           ? error.message
           : "Could not send your booking. Check your connection and try again.",
       );
+    }
+  }
+
+  async function queueBooking(payload: CreateServiceRequest): Promise<void> {
+    if (!isOutboxAvailable()) {
+      setFormError(
+        "Your browser cannot save the booking offline. Reconnect and try again.",
+      );
+      return;
+    }
+
+    try {
+      await enqueueBooking(payload);
+      await refreshPending();
+      reset();
+      showToast({
+        tone: "info",
+        title: "Saved on your phone",
+        body: "We will send it to the workshop as soon as you have signal.",
+      });
+      router.replace("/dashboard/requests");
+    } catch {
+      setFormError("Could not save your booking on this device. Try again.");
     }
   }
 

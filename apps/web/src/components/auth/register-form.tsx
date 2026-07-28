@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  PASSWORD_MIN_LENGTH,
-  type RegisterRequest,
-  registerRequestSchema,
-} from "@chrysmec/shared";
+import { type RegisterRequest, registerRequestSchema } from "@chrysmec/shared";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordStrength } from "@/components/auth/password-strength";
 import { ApiError } from "@/lib/api/client";
 import { homeForRole } from "@/lib/auth/routes";
 
@@ -24,6 +22,7 @@ export function RegisterForm() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
+    control,
     register,
     handleSubmit,
     setError,
@@ -32,6 +31,9 @@ export function RegisterForm() {
     resolver: zodResolver(registerRequestSchema),
     defaultValues: { fullName: "", email: "", phone: "", password: "" },
   });
+
+  // Watched so the strength meter updates as they type.
+  const password = useWatch({ control, name: "password" }) ?? "";
 
   async function onSubmit(values: RegisterRequest): Promise<void> {
     setFormError(null);
@@ -110,14 +112,17 @@ export function RegisterForm() {
         )}
       </FormField>
 
-      <FormField
-        id="password"
-        label="Password"
-        hint={`At least ${PASSWORD_MIN_LENGTH} characters, including a letter and a number.`}
-        error={errors.password?.message}
-      >
+      <FormField id="password" label="Password" error={errors.password?.message}>
         {(field) => (
-          <Input {...field} {...register("password")} type="password" autoComplete="new-password" />
+          <>
+            <PasswordInput
+              {...field}
+              {...register("password")}
+              autoComplete="new-password"
+              aria-describedby={`${field["aria-describedby"] ?? ""} password-strength`.trim()}
+            />
+            <PasswordStrength id="password-strength" value={password} />
+          </>
         )}
       </FormField>
 

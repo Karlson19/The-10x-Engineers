@@ -17,10 +17,12 @@ out/
 .vercel/
 next-env.d.ts
 
-# service worker build output (Serwist, from Phase 5)
-public/sw.js
-public/sw.js.map
-public/swe-worker-*.js
+# Service worker build output. The leading ** matters: these live in
+# apps/web/public, and a rooted pattern would only match a public folder at the
+# repository root.
+**/public/sw.js
+**/public/sw.js.map
+**/public/swe-worker-*.js
 
 # tooling
 coverage/

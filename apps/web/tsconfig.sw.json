@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // The service worker runs in a worker scope, not the DOM, so it needs the
+    // WebWorker library rather than the app's DOM one.
+    "lib": ["ESNext", "WebWorker"],
+    // node is here only for process.env, which Next inlines at build time.
+    "types": ["@serwist/next/typings", "node"],
+    "noEmit": true
+  },
+  "include": ["src/app/sw.ts"],
+  "exclude": []
+}

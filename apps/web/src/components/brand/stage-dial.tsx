@@ -11,9 +11,7 @@ const CORE_RADIUS = 88;
 /** The five timeline stages laid out over three quarters of the face. */
 const FIRST_STAGE_ANGLE = -108;
 const STAGE_SWEEP = 54;
-
-/** How far the job on the dial has got. Three of five stages done. */
-const COMPLETED_STAGES = 3;
+const LAST_STAGE_ANGLE = FIRST_STAGE_ANGLE + STAGE_SWEEP * (TIMELINE_STAGES.length - 1);
 
 /**
  * The hero artwork is the status timeline drawn as an instrument face. It is
@@ -21,20 +19,17 @@ const COMPLETED_STAGES = 3;
  * than with a stock photograph. Pure geometry, no image request, which also
  * means nothing to download on a 3G connection.
  *
- * It animates on load: the arc draws, the needle sweeps round to the stage the
- * job has reached and then breathes, and the stage nodes drop in behind it. All
- * of it is CSS, so the landing page carries no animation library, and all of it
- * stops under prefers-reduced-motion.
+ * It runs continuously: the needle steps through the five stages of a job,
+ * pausing on each, and the copper track fills to meet it. The pauses are the
+ * point. A gauge that holds at a reading looks like it is measuring something.
+ *
+ * All of it is CSS, so the landing page carries no animation library, and all
+ * of it stops under prefers-reduced-motion.
  */
 export function StageDial({ className }: { className?: string }) {
   const stageAngles = TIMELINE_STAGES.map(
     (_stage, index) => FIRST_STAGE_ANGLE + index * STAGE_SWEEP,
   );
-  const lastCompletedAngle = stageAngles[COMPLETED_STAGES - 1] ?? FIRST_STAGE_ANGLE;
-
-  // The needle starts at the first stage and swings to where the job actually
-  // is, so the distance it travels is the progress it is reporting.
-  const swingFrom = FIRST_STAGE_ANGLE - lastCompletedAngle;
 
   const minorTicks: string[] = [];
   const majorTicks: string[] = [];
@@ -47,7 +42,10 @@ export function StageDial({ className }: { className?: string }) {
     }
   }
 
-  const [needleX, needleY] = polar(CENTRE, CENTRE, CORE_RADIUS - 14, lastCompletedAngle);
+  // The needle is drawn pointing at the middle stage and rotated from there,
+  // so the keyframes are symmetrical around zero.
+  const [needleX, needleY] = polar(CENTRE, CENTRE, CORE_RADIUS - 14, 0);
+  const [tipX, tipY] = polar(CENTRE, CENTRE, TRACK_RADIUS - 22, 0);
 
   return (
     <svg
@@ -60,79 +58,62 @@ export function StageDial({ className }: { className?: string }) {
         <circle cx={CENTRE} cy={CENTRE} r={FACE_RADIUS} className="stroke-border" strokeWidth={1} />
         <circle cx={CENTRE} cy={CENTRE} r={CORE_RADIUS} className="stroke-border" strokeWidth={1} />
 
-        {minorTicks.map((d) => (
-          <path key={d} d={d} className="stroke-border" strokeWidth={1} />
-        ))}
-        {majorTicks.map((d) => (
-          <path key={d} d={d} className="stroke-muted-foreground/40" strokeWidth={1} />
-        ))}
+        <g className="dial-bezel">
+          {minorTicks.map((d) => (
+            <path key={d} d={d} className="stroke-border" strokeWidth={1} />
+          ))}
+          {majorTicks.map((d) => (
+            <path key={d} d={d} className="stroke-muted-foreground/40" strokeWidth={1} />
+          ))}
+        </g>
       </g>
 
-      {/* The full run of the job, then the part of it that is done. */}
+      {/* The whole run of a job, unlit. */}
       <path
-        d={arcPath(
-          CENTRE,
-          CENTRE,
-          TRACK_RADIUS,
-          FIRST_STAGE_ANGLE,
-          FIRST_STAGE_ANGLE + STAGE_SWEEP * (TIMELINE_STAGES.length - 1),
-        )}
+        d={arcPath(CENTRE, CENTRE, TRACK_RADIUS, FIRST_STAGE_ANGLE, LAST_STAGE_ANGLE)}
         className="stroke-border"
-        strokeWidth={6}
+        strokeWidth={7}
         strokeLinecap="round"
       />
+
+      {/* The part of it that is done, filling to meet the needle. */}
       <path
-        d={arcPath(CENTRE, CENTRE, TRACK_RADIUS, FIRST_STAGE_ANGLE, lastCompletedAngle)}
-        // pathLength normalises the dash units to 0 to 1, so the draw does not
+        d={arcPath(CENTRE, CENTRE, TRACK_RADIUS, FIRST_STAGE_ANGLE, LAST_STAGE_ANGLE)}
+        // pathLength normalises the dash units to 0 to 1, so the fill does not
         // have to know how long the arc actually is.
         pathLength={1}
         className="dial-sweep stroke-primary"
-        strokeWidth={6}
+        strokeWidth={7}
         strokeLinecap="round"
       />
 
       {stageAngles.map((degrees, index) => {
         const [x, y] = polar(CENTRE, CENTRE, TRACK_RADIUS, degrees);
-        const isCurrent = index === COMPLETED_STAGES - 1;
-        const isDone = index < COMPLETED_STAGES;
 
         return (
-          <g key={TIMELINE_STAGES[index]}>
-            {isCurrent ? (
-              <circle cx={x} cy={y} r={19} className="dial-pulse fill-accent/25" />
-            ) : null}
-            <circle
-              cx={x}
-              cy={y}
-              r={isCurrent ? 11 : 8}
-              className={cn(
-                "dial-node",
-                isCurrent
-                  ? "fill-accent"
-                  : isDone
-                    ? "fill-primary"
-                    : "fill-background stroke-border",
-              )}
-              // Each node lands just after the arc reaches it.
-              style={{ animationDelay: `${0.3 + index * 0.16}s` }}
-              strokeWidth={2}
-            />
-          </g>
+          <circle
+            key={TIMELINE_STAGES[index]}
+            cx={x}
+            cy={y}
+            r={8}
+            className="dial-node fill-background stroke-border"
+            style={{ animationDelay: `${0.2 + index * 0.12}s` }}
+            strokeWidth={2}
+          />
         );
       })}
 
-      {/* The needle, pointing at the stage the job has reached. */}
-      <g
-        className="dial-needle"
-        style={{ "--dial-swing-from": `${swingFrom}deg` } as React.CSSProperties}
-      >
+      {/* The needle, with the copper head that rides the track. */}
+      <g className="dial-needle">
         <path
           d={`M ${CENTRE} ${CENTRE} L ${needleX} ${needleY}`}
           className="stroke-accent"
-          strokeWidth={2}
+          strokeWidth={2.5}
           strokeLinecap="round"
         />
-        <circle cx={CENTRE} cy={CENTRE} r={5} className="fill-accent" />
+        <circle cx={tipX} cy={tipY} r={19} className="dial-pulse fill-accent/25" />
+        <circle cx={tipX} cy={tipY} r={11} className="fill-accent" />
+        <circle cx={CENTRE} cy={CENTRE} r={6} className="fill-accent" />
       </g>
     </svg>
   );

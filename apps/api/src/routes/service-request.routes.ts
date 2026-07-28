@@ -2,9 +2,11 @@ import { Router } from "express";
 import {
   create,
   getOne,
+  leaveFeedback,
   list,
   patch,
   patchStatus,
+  readFeedback,
   remove,
   timeline,
 } from "../controllers/service-request.controller";
@@ -26,3 +28,8 @@ serviceRequestRouter.patch("/:id", patch);
 serviceRequestRouter.patch("/:id/status", patchStatus);
 serviceRequestRouter.delete("/:id", remove);
 serviceRequestRouter.get("/:id/timeline", timeline);
+
+// Feedback closes the loop after a job. Only the customer leaves it, and the
+// service checks the work is actually finished.
+serviceRequestRouter.post("/:id/feedback", requireRole("CLIENT"), leaveFeedback);
+serviceRequestRouter.get("/:id/feedback", readFeedback);

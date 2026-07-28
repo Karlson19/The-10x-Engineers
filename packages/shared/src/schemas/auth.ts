@@ -15,6 +15,63 @@ export const passwordSchema = z
   .regex(/[A-Za-z]/, "Include at least one letter.")
   .regex(/\d/, "Include at least one number.");
 
+/**
+ * The rules the schema above enforces, in a form the sign up form can show
+ * live. Both come from this one list, so the checklist can never promise
+ * something the server then rejects.
+ */
+export const PASSWORD_RULES: ReadonlyArray<{
+  id: string;
+  label: string;
+  test: (value: string) => boolean;
+}> = [
+  {
+    id: "length",
+    label: `At least ${PASSWORD_MIN_LENGTH} characters`,
+    test: (value) => value.length >= PASSWORD_MIN_LENGTH,
+  },
+  { id: "letter", label: "A letter", test: (value) => /[A-Za-z]/.test(value) },
+  { id: "number", label: "A number", test: (value) => /\d/.test(value) },
+];
+
+/** Not required, but each one makes a password meaningfully harder to guess. */
+const PASSWORD_BONUSES: ReadonlyArray<(value: string) => boolean> = [
+  (value) => value.length >= 14,
+  (value) => /[^A-Za-z0-9]/.test(value),
+  (value) => /[a-z]/.test(value) && /[A-Z]/.test(value),
+];
+
+export type PasswordStrength = {
+  /** 0 to 4, where anything below 2 has not met the required rules yet. */
+  score: 0 | 1 | 2 | 3 | 4;
+  label: string;
+  meetsRequirements: boolean;
+  failing: string[];
+};
+
+export function passwordStrength(value: string): PasswordStrength {
+  if (value.length === 0) {
+    return { score: 0, label: "Enter a password", meetsRequirements: false, failing: [] };
+  }
+
+  const failing = PASSWORD_RULES.filter((rule) => !rule.test(value)).map((rule) => rule.id);
+  const meetsRequirements = failing.length === 0;
+
+  if (!meetsRequirements) {
+    return { score: 1, label: "Too weak", meetsRequirements, failing };
+  }
+
+  const bonuses = PASSWORD_BONUSES.filter((test) => test(value)).length;
+  const score = bonuses >= 3 ? 4 : bonuses >= 1 ? 3 : 2;
+
+  return {
+    score,
+    label: score === 4 ? "Strong" : score === 3 ? "Good" : "Acceptable",
+    meetsRequirements,
+    failing,
+  };
+}
+
 export const emailSchema = z
   .email({ message: "Enter a valid email address." })
   .trim()

@@ -4,7 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { REQUEST_STATUSES, REQUEST_STATUS_LABELS, type RequestStatus } from "@chrysmec/shared";
+import { AnimatePresence } from "motion/react";
 import { RequestCard } from "@/components/requests/request-card";
+import { PendingBookingCard } from "@/components/requests/pending-booking-card";
+import { useOffline } from "@/components/providers/offline-provider";
+import { useOutbox } from "@/hooks/use-outbox";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
@@ -22,6 +26,15 @@ function label(filter: Filter): string {
 export function RequestList() {
   const [filter, setFilter] = useState<Filter>("ALL");
   const requests = useServiceRequests(filter === "ALL" ? {} : { status: filter });
+  const { refreshPending } = useOffline();
+  const outbox = useOutbox();
+
+  // Queued bookings have no status yet, so they only belong in the unfiltered
+  // view and under Submitted.
+  const pending =
+    filter === "ALL" || filter === "SUBMITTED"
+      ? outbox.filter((entry) => entry.status !== "synced" || Date.now() - entry.updatedAt < 6000)
+      : [];
 
   return (
     <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
@@ -69,7 +82,7 @@ export function RequestList() {
             onRetry={() => void requests.refetch()}
             isRetrying={requests.isRefetching}
           />
-        ) : requests.data.data.length === 0 ? (
+        ) : requests.data.data.length === 0 && pending.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
             title={filter === "ALL" ? "No bookings yet" : `Nothing ${label(filter).toLowerCase()}`}
@@ -86,6 +99,21 @@ export function RequestList() {
           />
         ) : (
           <div>
+            {/*
+              Anything still on the device sits at the top, because it is the
+              newest and because someone who just booked offline needs to see
+              that it was not lost.
+            */}
+            <AnimatePresence initial={false}>
+              {pending.map((entry) => (
+                <PendingBookingCard
+                  key={entry.clientRequestId}
+                  entry={entry}
+                  onChanged={() => void refreshPending()}
+                />
+              ))}
+            </AnimatePresence>
+
             {requests.data.data.map((item) => (
               <RequestCard key={item.id} serviceRequest={item} />
             ))}
