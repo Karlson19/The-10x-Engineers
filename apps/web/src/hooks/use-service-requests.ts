@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateServiceRequest, Section } from "@chrysmec/shared";
+import type { CreateServiceRequest, Section, UpdateStatusRequest } from "@chrysmec/shared";
 import {
   type RequestFilters,
   createServiceRequest,
@@ -10,6 +10,7 @@ import {
   fetchServiceRequest,
   fetchServiceRequests,
   fetchTimeline,
+  updateServiceRequestStatus,
 } from "@/lib/api/service-requests";
 
 export const REQUESTS_KEY = ["service-requests"] as const;
@@ -55,6 +56,24 @@ export function useCreateServiceRequest() {
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: REQUESTS_KEY });
       void queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+    },
+  });
+}
+
+/**
+ * Used by staff to move a booking on, and by a customer to approve or decline
+ * an estimate. Which moves each role may make is decided on the server.
+ */
+export function useUpdateServiceRequestStatus(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateStatusRequest) => updateServiceRequestStatus(id, input),
+    onSuccess(updated) {
+      queryClient.setQueryData([...REQUESTS_KEY, "detail", id], updated);
+      void queryClient.invalidateQueries({ queryKey: [...REQUESTS_KEY, "timeline", id] });
+      void queryClient.invalidateQueries({ queryKey: [...REQUESTS_KEY, "list"] });
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
 }

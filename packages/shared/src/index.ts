@@ -8,3 +8,6 @@ export * from "./schemas/user";
 export * from "./schemas/vehicle";
 export * from "./schemas/catalogue";
 export * from "./schemas/service-request";
+export * from "./schemas/inventory";
+export * from "./schemas/job";
+export * from "./schemas/analytics";

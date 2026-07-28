@@ -20,12 +20,21 @@ const COMPLETED_STAGES = 3;
  * the one screen a customer remembers, so the shopfront leads with it rather
  * than with a stock photograph. Pure geometry, no image request, which also
  * means nothing to download on a 3G connection.
+ *
+ * It animates on load: the arc draws, the needle sweeps round to the stage the
+ * job has reached and then breathes, and the stage nodes drop in behind it. All
+ * of it is CSS, so the landing page carries no animation library, and all of it
+ * stops under prefers-reduced-motion.
  */
 export function StageDial({ className }: { className?: string }) {
   const stageAngles = TIMELINE_STAGES.map(
     (_stage, index) => FIRST_STAGE_ANGLE + index * STAGE_SWEEP,
   );
   const lastCompletedAngle = stageAngles[COMPLETED_STAGES - 1] ?? FIRST_STAGE_ANGLE;
+
+  // The needle starts at the first stage and swings to where the job actually
+  // is, so the distance it travels is the progress it is reporting.
+  const swingFrom = FIRST_STAGE_ANGLE - lastCompletedAngle;
 
   const minorTicks: string[] = [];
   const majorTicks: string[] = [];
@@ -38,6 +47,8 @@ export function StageDial({ className }: { className?: string }) {
     }
   }
 
+  const [needleX, needleY] = polar(CENTRE, CENTRE, CORE_RADIUS - 14, lastCompletedAngle);
+
   return (
     <svg
       viewBox={`0 0 ${SIZE} ${SIZE}`}
@@ -45,15 +56,17 @@ export function StageDial({ className }: { className?: string }) {
       fill="none"
       aria-hidden
     >
-      <circle cx={CENTRE} cy={CENTRE} r={FACE_RADIUS} className="stroke-border" strokeWidth={1} />
-      <circle cx={CENTRE} cy={CENTRE} r={CORE_RADIUS} className="stroke-border" strokeWidth={1} />
+      <g className="dial-face">
+        <circle cx={CENTRE} cy={CENTRE} r={FACE_RADIUS} className="stroke-border" strokeWidth={1} />
+        <circle cx={CENTRE} cy={CENTRE} r={CORE_RADIUS} className="stroke-border" strokeWidth={1} />
 
-      {minorTicks.map((d) => (
-        <path key={d} d={d} className="stroke-border" strokeWidth={1} />
-      ))}
-      {majorTicks.map((d) => (
-        <path key={d} d={d} className="stroke-muted-foreground/40" strokeWidth={1} />
-      ))}
+        {minorTicks.map((d) => (
+          <path key={d} d={d} className="stroke-border" strokeWidth={1} />
+        ))}
+        {majorTicks.map((d) => (
+          <path key={d} d={d} className="stroke-muted-foreground/40" strokeWidth={1} />
+        ))}
+      </g>
 
       {/* The full run of the job, then the part of it that is done. */}
       <path
@@ -70,7 +83,10 @@ export function StageDial({ className }: { className?: string }) {
       />
       <path
         d={arcPath(CENTRE, CENTRE, TRACK_RADIUS, FIRST_STAGE_ANGLE, lastCompletedAngle)}
-        className="stroke-primary"
+        // pathLength normalises the dash units to 0 to 1, so the draw does not
+        // have to know how long the arc actually is.
+        pathLength={1}
+        className="dial-sweep stroke-primary"
         strokeWidth={6}
         strokeLinecap="round"
       />
@@ -83,19 +99,22 @@ export function StageDial({ className }: { className?: string }) {
         return (
           <g key={TIMELINE_STAGES[index]}>
             {isCurrent ? (
-              <circle cx={x} cy={y} r={19} className="fill-accent/12" />
+              <circle cx={x} cy={y} r={19} className="dial-pulse fill-accent/25" />
             ) : null}
             <circle
               cx={x}
               cy={y}
               r={isCurrent ? 11 : 8}
-              className={
+              className={cn(
+                "dial-node",
                 isCurrent
                   ? "fill-accent"
                   : isDone
                     ? "fill-primary"
-                    : "fill-background stroke-border"
-              }
+                    : "fill-background stroke-border",
+              )}
+              // Each node lands just after the arc reaches it.
+              style={{ animationDelay: `${0.3 + index * 0.16}s` }}
               strokeWidth={2}
             />
           </g>
@@ -103,13 +122,18 @@ export function StageDial({ className }: { className?: string }) {
       })}
 
       {/* The needle, pointing at the stage the job has reached. */}
-      <path
-        d={`M ${CENTRE} ${CENTRE} L ${polar(CENTRE, CENTRE, CORE_RADIUS - 14, lastCompletedAngle)[0]} ${polar(CENTRE, CENTRE, CORE_RADIUS - 14, lastCompletedAngle)[1]}`}
-        className="stroke-accent"
-        strokeWidth={2}
-        strokeLinecap="round"
-      />
-      <circle cx={CENTRE} cy={CENTRE} r={5} className="fill-accent" />
+      <g
+        className="dial-needle"
+        style={{ "--dial-swing-from": `${swingFrom}deg` } as React.CSSProperties}
+      >
+        <path
+          d={`M ${CENTRE} ${CENTRE} L ${needleX} ${needleY}`}
+          className="stroke-accent"
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+        <circle cx={CENTRE} cy={CENTRE} r={5} className="fill-accent" />
+      </g>
     </svg>
   );
 }

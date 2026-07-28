@@ -1,10 +1,16 @@
-import type { InventoryItem, Prisma, ServiceCatalogItem, Vehicle } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { InventoryItem, ServiceCatalogItem, Vehicle } from "@prisma/client";
+
+const { Decimal } = Prisma;
 import {
   type ServiceCatalogItem as CatalogueItemDto,
+  type InventoryItem as InventoryItemDto,
+  type Job as JobDto,
   type ServiceRequest as ServiceRequestDto,
   type StatusEvent as StatusEventDto,
   type Vehicle as VehicleDto,
   type VehicleSummary,
+  type WorkLogEntry as WorkLogEntryDto,
   referenceFromId,
   requestStatusSchema,
   symptomAnswersSchema,
@@ -55,19 +61,17 @@ export function toCatalogueItem(item: ServiceCatalogItem): CatalogueItemDto {
   };
 }
 
-export function toInventoryLine(item: InventoryItem): {
-  id: string;
-  name: string;
-  sku: string;
-  quantityInStock: number;
-  unitCost: string;
-} {
+export function toInventoryItem(item: InventoryItem): InventoryItemDto {
   return {
     id: item.id,
     name: item.name,
     sku: item.sku,
+    section: item.section,
     quantityInStock: item.quantityInStock,
     unitCost: money(item.unitCost),
+    reorderLevel: item.reorderLevel,
+    // Derived here so no screen has to remember the rule for itself.
+    isLowStock: item.quantityInStock <= item.reorderLevel,
   };
 }
 
@@ -135,5 +139,75 @@ export function toStatusEvent(event: {
     toStatus: requestStatusSchema.parse(event.toStatus),
     note: event.note,
     createdAt: event.createdAt.toISOString(),
+  };
+}
+
+/** Everything a job response needs, loaded in one query. */
+export const jobInclude = {
+  assignedStaff: { select: { id: true, fullName: true, section: true } },
+  serviceRequest: {
+    include: {
+      vehicle: { select: { id: true, make: true, model: true, year: true, registrationNo: true } },
+      client: { select: { id: true, fullName: true, phone: true } },
+    },
+  },
+  workLog: true,
+} satisfies Prisma.JobInclude;
+
+export type JobRow = Prisma.JobGetPayload<{ include: typeof jobInclude }>;
+
+export function toWorkLogEntry(entry: {
+  id: string;
+  jobId: string;
+  inventoryItemId: string | null;
+  lineType: WorkLogEntryDto["lineType"];
+  description: string;
+  quantity: number;
+  unitCost: Prisma.Decimal;
+  createdAt: Date;
+}): WorkLogEntryDto {
+  return {
+    id: entry.id,
+    jobId: entry.jobId,
+    inventoryItemId: entry.inventoryItemId,
+    lineType: entry.lineType,
+    description: entry.description,
+    quantity: entry.quantity,
+    unitCost: money(entry.unitCost),
+    // Worked out once, on the server, so every screen shows the same number.
+    lineTotal: money(entry.unitCost.mul(entry.quantity)),
+    createdAt: entry.createdAt.toISOString(),
+  };
+}
+
+export function workLogTotal(
+  entries: ReadonlyArray<{ unitCost: Prisma.Decimal; quantity: number }>,
+): string {
+  return entries
+    .reduce((total, entry) => total.add(entry.unitCost.mul(entry.quantity)), new Decimal(0))
+    .toFixed(2);
+}
+
+export function toJob(row: JobRow): JobDto {
+  return {
+    id: row.id,
+    serviceRequestId: row.serviceRequestId,
+    reference: referenceFromId(row.serviceRequestId),
+    status: row.status,
+    section: row.serviceRequest.section,
+    startedAt: row.startedAt?.toISOString() ?? null,
+    completedAt: row.completedAt?.toISOString() ?? null,
+    diagnosisNotes: row.diagnosisNotes,
+    workSummary: row.workSummary,
+    createdAt: row.createdAt.toISOString(),
+    assignedStaff: row.assignedStaff,
+    client: row.serviceRequest.client,
+    vehicle: toVehicleSummary(row.serviceRequest.vehicle),
+    preferredDateTime: row.serviceRequest.preferredDateTime.toISOString(),
+    requestStatus: row.serviceRequest.status,
+    symptomCategory: row.serviceRequest.symptomCategory,
+    estimatedCost:
+      row.serviceRequest.estimatedCost === null ? null : money(row.serviceRequest.estimatedCost),
+    workLogTotal: workLogTotal(row.workLog),
   };
 }

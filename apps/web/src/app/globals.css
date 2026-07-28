@@ -327,6 +327,122 @@
     }
   }
 
+  /* -------------------------------------------------------------------------
+     The stage dial. An instrument face that runs through its stages on load,
+     the way a real gauge sweeps and settles when you turn the key.
+
+     Written in CSS rather than with an animation library on purpose: this sits
+     on the landing page, which has to stay light on a 3G connection.
+  ------------------------------------------------------------------------- */
+
+  .dial-sweep {
+    /* Draws the completed run of the job clockwise from the first stage. */
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: dial-draw 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+
+  @keyframes dial-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .dial-needle {
+    /*
+      view-box rather than fill-box: the needle has to pivot on the centre of
+      the face, not on the centre of its own bounding box.
+    */
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    /*
+      Sweeps into place with the arc, then breathes very slightly, so the face
+      reads as live rather than as a picture of a gauge.
+    */
+    animation:
+      dial-swing 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both,
+      dial-settle 6s ease-in-out 1.4s infinite;
+  }
+
+  @keyframes dial-swing {
+    from {
+      transform: rotate(var(--dial-swing-from, -108deg));
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes dial-settle {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    50% {
+      transform: rotate(-1.4deg);
+    }
+  }
+
+  .dial-node {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: dial-node-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes dial-node-in {
+    from {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* The same soft ring as the current stage on the status timeline. */
+  .dial-pulse {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: dial-pulse 2s ease-out 1.5s infinite;
+  }
+
+  @keyframes dial-pulse {
+    0% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
+
+  .dial-face {
+    animation: dial-face-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes dial-face-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dial-sweep,
+    .dial-needle,
+    .dial-node,
+    .dial-pulse,
+    .dial-face {
+      animation: none;
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
   /* Skeleton shimmer. Transform only, so it stays cheap on a mid-range phone. */
   @keyframes shimmer {
     to {

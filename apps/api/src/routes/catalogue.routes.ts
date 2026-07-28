@@ -1,10 +1,15 @@
 import { Router } from "express";
-import { list } from "../controllers/catalogue.controller";
+import { create, list, patch, remove } from "../controllers/catalogue.controller";
 import { authenticate } from "../middleware/authenticate";
+import { requireRole } from "../middleware/rbac";
 
 export const catalogueRouter: Router = Router();
 
-// Read only for now. Creating and editing catalogue items arrives with the
-// management screens.
+// Anyone signed in reads the catalogue, because the booking wizard needs it.
+// Only management changes it.
 catalogueRouter.use(authenticate);
+
 catalogueRouter.get("/", list);
+catalogueRouter.post("/", requireRole("MANAGEMENT"), create);
+catalogueRouter.patch("/:id", requireRole("MANAGEMENT"), patch);
+catalogueRouter.delete("/:id", requireRole("MANAGEMENT"), remove);

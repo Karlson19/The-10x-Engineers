@@ -10,6 +10,7 @@ import {
   type UpdateServiceRequest,
   type UpdateStatusRequest,
   canTransition,
+  clientMayTransition,
   referenceFromId,
   STATUS_TRANSITIONS,
 } from "@chrysmec/shared";
@@ -321,6 +322,20 @@ export async function updateServiceRequestStatus(
   const from: RequestStatus = existing.status;
   const to = input.status;
 
+  // A customer may only answer an estimate on their own booking: approve it and
+  // work continues, or decline it and the booking is cancelled. Everything else
+  // is the workshop's to move.
+  if (user.role === "CLIENT") {
+    if (existing.clientId !== user.id) {
+      throw HttpError.notFound("We could not find that service request.");
+    }
+    if (!clientMayTransition(from, to)) {
+      throw HttpError.forbidden(
+        "Only the workshop can move a booking. You can approve or decline an estimate when we send one.",
+      );
+    }
+  }
+
   if (from === to) {
     throw HttpError.invalidTransition(
       `This booking is already ${REQUEST_STATUS_LABELS[to].toLowerCase()}.`,
@@ -338,10 +353,27 @@ export async function updateServiceRequestStatus(
     );
   }
 
+  if (input.estimatedCost !== undefined && user.role === "CLIENT") {
+    throw HttpError.forbidden("Only the workshop can set an estimate.");
+  }
+
+  // The estimate is what the customer is being asked to approve, so it is
+  // recorded in the same operation as the move to awaiting approval.
+  const data: Prisma.ServiceRequestUpdateInput = { status: to };
+  if (input.estimatedCost !== undefined) {
+    data.estimatedCost = new Prisma.Decimal(input.estimatedCost);
+  }
+
+  const noteForEvent =
+    input.note ??
+    (to === "AWAITING_APPROVAL" && input.estimatedCost !== undefined
+      ? `Estimate of GHS ${input.estimatedCost} sent for approval.`
+      : null);
+
   const updated = await prisma.$transaction(async (tx) => {
     const request = await tx.serviceRequest.update({
       where: { id },
-      data: { status: to },
+      data,
       include: serviceRequestInclude,
     });
 
@@ -350,19 +382,30 @@ export async function updateServiceRequestStatus(
         serviceRequestId: id,
         fromStatus: from,
         toStatus: to,
-        note: input.note ?? null,
+        note: noteForEvent,
       },
     });
 
     return request;
   }, TRANSACTION_OPTIONS);
 
-  await notify(
-    updated.clientId,
-    `${referenceFromId(id)} is now ${REQUEST_STATUS_LABELS[to].toLowerCase()}`,
-    input.note ??
-      `Your ${updated.vehicle.make} ${updated.vehicle.model} has moved to ${REQUEST_STATUS_LABELS[to].toLowerCase()}.`,
-  );
+  // When the workshop moves a booking the customer wants to know. When the
+  // customer answers an estimate, the technician waiting on them is the one
+  // who needs telling.
+  if (user.role === "CLIENT" && updated.job) {
+    await notify(
+      updated.job.assignedStaffId,
+      `${referenceFromId(id)} estimate ${to === "IN_PROGRESS" ? "approved" : "declined"}`,
+      `${updated.client.fullName} has ${to === "IN_PROGRESS" ? "approved the estimate, so work can continue" : "declined the estimate"}.`,
+    );
+  } else if (user.role !== "CLIENT") {
+    await notify(
+      updated.clientId,
+      `${referenceFromId(id)} is now ${REQUEST_STATUS_LABELS[to].toLowerCase()}`,
+      noteForEvent ??
+        `Your ${updated.vehicle.make} ${updated.vehicle.model} has moved to ${REQUEST_STATUS_LABELS[to].toLowerCase()}.`,
+    );
+  }
 
   return toServiceRequest(updated);
 }

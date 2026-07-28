@@ -21,6 +21,8 @@ serviceRequestRouter.post("/", requireRole("CLIENT"), create);
 serviceRequestRouter.get("/", list);
 serviceRequestRouter.get("/:id", getOne);
 serviceRequestRouter.patch("/:id", patch);
-serviceRequestRouter.patch("/:id/status", requireRole("STAFF", "MANAGEMENT"), patchStatus);
+// Open to every role because a customer answers their own estimate here. Which
+// moves each role may actually make is decided in the service.
+serviceRequestRouter.patch("/:id/status", patchStatus);
 serviceRequestRouter.delete("/:id", remove);
 serviceRequestRouter.get("/:id/timeline", timeline);

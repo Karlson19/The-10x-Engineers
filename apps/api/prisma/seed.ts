@@ -155,60 +155,69 @@ const INVENTORY: readonly InventorySeed[] = [
   { name: "Blade fuse assortment, 100 piece", sku: "ELE-FUS-AS100", section: "ELECTRICAL", quantityInStock: 7, unitCostPesewas: 4200, reorderLevel: 5 },
 ];
 
+/**
+ * Answers to the guided intake. The keys are the question ids and the values
+ * are the option values from the shared symptom catalogue, so seeded bookings
+ * read back through the same code path as one made in the wizard today.
+ */
 type SymptomSeed = {
   category: string;
-  /** Stored in the ServiceRequest.symptomDetails Json column. */
   details: Prisma.InputJsonObject;
 };
 
 const MECHANICAL_SYMPTOMS: readonly SymptomSeed[] = [
   {
-    category: "Engine",
+    category: "engine",
     details: {
-      whenItHappens: "When accelerating uphill",
-      warningLights: ["Check engine"],
-      unusualNoise: "Knocking from the front of the engine",
-      severity: "Still drivable",
+      engineSign: "noise",
+      engineNoise: "knocking",
+      whenItHappens: "accelerating",
+      warningLights: ["check-engine"],
+      severity: "drivable",
       notes: "Started about two weeks ago and is getting worse.",
     },
   },
   {
-    category: "Brakes",
+    category: "brakes",
     details: {
-      whenItHappens: "Every time I brake",
+      brakeSign: "grinding",
+      brakePosition: "front",
+      whenItHappens: "braking",
       warningLights: [],
-      unusualNoise: "Metal on metal grinding at the front",
-      severity: "Needs attention soon",
-      notes: "Pedal also feels softer than usual.",
+      severity: "soon",
+      notes: "The pedal also feels softer than it used to.",
     },
   },
   {
-    category: "Suspension",
+    category: "suspension",
     details: {
-      whenItHappens: "Over speed bumps and rough road",
+      suspensionSign: "knocking",
+      suspensionCorner: "rear-left",
+      whenItHappens: "always",
       warningLights: [],
-      unusualNoise: "Clunk from the rear left",
-      severity: "Still drivable",
+      severity: "drivable",
       notes: "The car leans in corners more than it used to.",
     },
   },
   {
-    category: "Transmission",
+    category: "transmission",
     details: {
-      whenItHappens: "Changing from second to third",
+      transmissionType: "manual",
+      transmissionSign: "slipping",
+      whenItHappens: "accelerating",
       warningLights: [],
-      unusualNoise: "None",
-      severity: "Needs attention soon",
+      severity: "soon",
       notes: "Revs climb but the car does not pull.",
     },
   },
   {
-    category: "Cooling",
+    category: "cooling",
     details: {
-      whenItHappens: "In traffic after 20 minutes",
-      warningLights: ["Temperature"],
-      unusualNoise: "None",
-      severity: "Not safe to drive",
+      coolingSign: "steam",
+      coolantTopUp: "yes-often",
+      whenItHappens: "idle",
+      warningLights: ["temperature"],
+      severity: "unsafe",
       notes: "Steam from the bonnet and coolant on the ground.",
     },
   },
@@ -216,52 +225,56 @@ const MECHANICAL_SYMPTOMS: readonly SymptomSeed[] = [
 
 const ELECTRICAL_SYMPTOMS: readonly SymptomSeed[] = [
   {
-    category: "Battery and charging",
+    category: "battery-charging",
     details: {
-      whenItHappens: "First start in the morning",
-      warningLights: ["Battery"],
-      unusualNoise: "Slow cranking",
-      severity: "Needs attention soon",
+      chargingSign: "slow-crank",
+      jumpStarts: "several",
+      whenItHappens: "cold-start",
+      warningLights: ["battery"],
+      severity: "soon",
       notes: "I have had to jump start it three times this week.",
     },
   },
   {
-    category: "Starting",
+    category: "starting",
     details: {
-      whenItHappens: "Randomly, mostly when the engine is hot",
+      startingSign: "single-click",
+      startingTemperature: "hot",
+      whenItHappens: "intermittent",
       warningLights: [],
-      unusualNoise: "Single click and nothing",
-      severity: "Not safe to drive",
+      severity: "unsafe",
       notes: "Tapping the starter sometimes gets it going.",
     },
   },
   {
-    category: "Lighting",
+    category: "lighting",
     details: {
-      whenItHappens: "At night on full beam",
+      lightingWhich: ["headlights"],
+      lightingSign: "intermittent",
+      whenItHappens: "always",
       warningLights: [],
-      unusualNoise: "None",
-      severity: "Still drivable",
-      notes: "Left headlight cuts out and comes back on bumps.",
+      severity: "drivable",
+      notes: "The left headlight cuts out and comes back on bumps.",
     },
   },
   {
-    category: "Air conditioning",
+    category: "air-conditioning",
     details: {
-      whenItHappens: "After about ten minutes of driving",
+      acSign: "intermittent",
+      whenItHappens: "hot",
       warningLights: [],
-      unusualNoise: "Click from the engine bay when it stops",
-      severity: "Still drivable",
+      severity: "drivable",
       notes: "Blows cold then warm, then cold again.",
     },
   },
   {
-    category: "Wiring",
+    category: "wiring",
     details: {
-      whenItHappens: "When I use the electric windows",
+      wiringSign: "fuse",
+      recentWork: "An alarm was fitted by someone else last year.",
+      whenItHappens: "intermittent",
       warningLights: [],
-      unusualNoise: "None",
-      severity: "Still drivable",
+      severity: "drivable",
       notes: "A fuse keeps blowing on the same circuit.",
     },
   },

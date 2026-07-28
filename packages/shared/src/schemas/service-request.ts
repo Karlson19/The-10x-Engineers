@@ -92,8 +92,32 @@ export type UpdateServiceRequest = z.infer<typeof updateServiceRequestSchema>;
 export const updateStatusSchema = z.object({
   status: requestStatusSchema,
   note: z.string().trim().max(500, "Keep the note under 500 characters.").optional(),
+  /**
+   * Sent by staff when moving a booking to awaiting approval. This is the
+   * figure the customer sees before they say yes, which is what stops the
+   * argument at handover.
+   */
+  estimatedCost: z
+    .string()
+    .trim()
+    .regex(/^\d{1,8}(\.\d{1,2})?$/, "Enter an amount, for example 450.00.")
+    .optional(),
 });
 export type UpdateStatusRequest = z.infer<typeof updateStatusSchema>;
+
+/**
+ * The two moves a customer is allowed to make themselves, both only from
+ * awaiting approval: approve the estimate, or decline and cancel.
+ */
+export const CLIENT_ALLOWED_TRANSITIONS: Readonly<
+  Record<string, readonly ["IN_PROGRESS", "CANCELLED"] | undefined>
+> = {
+  AWAITING_APPROVAL: ["IN_PROGRESS", "CANCELLED"],
+};
+
+export function clientMayTransition(from: string, to: string): boolean {
+  return CLIENT_ALLOWED_TRANSITIONS[from]?.some((allowed) => allowed === to) ?? false;
+}
 
 export const clientSummarySchema = z.object({
   id: z.uuid(),

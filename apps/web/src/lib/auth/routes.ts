@@ -1,13 +1,10 @@
 import type { Role } from "@chrysmec/shared";
 
-/**
- * Where each role lands after signing in. Staff and management get their own
- * areas in later phases; until then everyone shares the account home.
- */
+/** Where each role lands after signing in. */
 export const ROLE_HOME: Record<Role, string> = {
   CLIENT: "/dashboard",
-  STAFF: "/dashboard",
-  MANAGEMENT: "/dashboard",
+  STAFF: "/staff",
+  MANAGEMENT: "/admin",
 };
 
 export function homeForRole(role: Role): string {

@@ -7,6 +7,7 @@ import {
   type Section,
   type StatusEvent,
   type UpdateServiceRequest,
+  type UpdateStatusRequest,
   serviceCatalogueResponseSchema,
   serviceRequestListResponseSchema,
   serviceRequestResponseSchema,
@@ -58,6 +59,17 @@ export async function updateServiceRequest(
   input: UpdateServiceRequest,
 ): Promise<ServiceRequest> {
   const result = await apiRequest(`/service-requests/${id}`, serviceRequestResponseSchema, {
+    method: "PATCH",
+    body: input,
+  });
+  return result.serviceRequest;
+}
+
+export async function updateServiceRequestStatus(
+  id: string,
+  input: UpdateStatusRequest,
+): Promise<ServiceRequest> {
+  const result = await apiRequest(`/service-requests/${id}/status`, serviceRequestResponseSchema, {
     method: "PATCH",
     body: input,
   });

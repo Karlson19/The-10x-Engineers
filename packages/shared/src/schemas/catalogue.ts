@@ -26,3 +26,25 @@ export const serviceCatalogueResponseSchema = z.object({
   data: z.array(serviceCatalogItemSchema),
 });
 export type ServiceCatalogueResponse = z.infer<typeof serviceCatalogueResponseSchema>;
+
+/** Prices arrive as strings so no precision is lost on the way in either. */
+export const catalogueePriceSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{1,8}(\.\d{1,2})?$/, "Enter an amount, for example 450.00.");
+
+export const createServiceCatalogItemSchema = z.object({
+  name: z.string().trim().min(2, "Enter the service name.").max(120),
+  description: z.string().trim().min(5, "Say what the service covers.").max(500),
+  section: sectionSchema,
+  basePrice: catalogueePriceSchema,
+  isActive: z.boolean().default(true),
+});
+export type CreateServiceCatalogItem = z.infer<typeof createServiceCatalogItemSchema>;
+
+export const updateServiceCatalogItemSchema = createServiceCatalogItemSchema
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Send at least one field to change.",
+  });
+export type UpdateServiceCatalogItem = z.infer<typeof updateServiceCatalogItemSchema>;

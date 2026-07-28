@@ -1,13 +1,21 @@
-import type { Prisma } from "@prisma/client";
-import type { ServiceCatalogItem, ServiceCatalogueQuery } from "@chrysmec/shared";
+import { Prisma } from "@prisma/client";
+import type {
+  CreateServiceCatalogItem,
+  ServiceCatalogItem,
+  ServiceCatalogueQuery,
+  UpdateServiceCatalogItem,
+} from "@chrysmec/shared";
+import { HttpError } from "../lib/http-error";
 import { prisma } from "../lib/prisma";
 import type { AuthenticatedUser } from "../types/auth";
 import { toCatalogueItem } from "./mappers";
 
+const { Decimal } = Prisma;
+
 /**
  * The catalogue behind the booking wizard's optional service picker. Only
  * management may look at retired items; everyone else sees what is bookable
- * today. Creating and editing items arrives with the management screens.
+ * today.
  */
 export async function listCatalogue(
   user: AuthenticatedUser,
@@ -30,4 +38,64 @@ export async function listCatalogue(
   });
 
   return items.map(toCatalogueItem);
+}
+
+export async function createCatalogueItem(
+  input: CreateServiceCatalogItem,
+): Promise<ServiceCatalogItem> {
+  const item = await prisma.serviceCatalogItem.create({
+    data: {
+      name: input.name,
+      description: input.description,
+      section: input.section,
+      basePrice: new Decimal(input.basePrice),
+      isActive: input.isActive,
+    },
+  });
+
+  return toCatalogueItem(item);
+}
+
+export async function updateCatalogueItem(
+  id: string,
+  input: UpdateServiceCatalogItem,
+): Promise<ServiceCatalogItem> {
+  const existing = await prisma.serviceCatalogItem.findUnique({ where: { id } });
+  if (!existing) {
+    throw HttpError.notFound("We could not find that service.");
+  }
+
+  const data: Prisma.ServiceCatalogItemUpdateInput = {};
+  if (input.name !== undefined) {
+    data.name = input.name;
+  }
+  if (input.description !== undefined) {
+    data.description = input.description;
+  }
+  if (input.section !== undefined) {
+    data.section = input.section;
+  }
+  if (input.basePrice !== undefined) {
+    data.basePrice = new Decimal(input.basePrice);
+  }
+  if (input.isActive !== undefined) {
+    data.isActive = input.isActive;
+  }
+
+  return toCatalogueItem(await prisma.serviceCatalogItem.update({ where: { id }, data }));
+}
+
+/**
+ * Retired rather than deleted. Past bookings reference these rows, and a
+ * customer's history should still say what they asked for.
+ */
+export async function retireCatalogueItem(id: string): Promise<ServiceCatalogItem> {
+  const existing = await prisma.serviceCatalogItem.findUnique({ where: { id } });
+  if (!existing) {
+    throw HttpError.notFound("We could not find that service.");
+  }
+
+  return toCatalogueItem(
+    await prisma.serviceCatalogItem.update({ where: { id }, data: { isActive: false } }),
+  );
 }
