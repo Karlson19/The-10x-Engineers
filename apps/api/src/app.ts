@@ -28,7 +28,16 @@ export function createApp(): Express {
           callback(null, true);
           return;
         }
-        callback(new Error(`Origin ${origin} is not allowed.`));
+
+        /**
+         * Answer normally but without the allow header, which is what makes the
+         * browser refuse the response. Passing an Error here instead would turn
+         * every call from an unlisted origin into a 500, so a misconfigured
+         * CORS_ORIGIN would look like the server had crashed, and the logs
+         * would fill with stack traces for what is really a settings problem.
+         */
+        logger.warn({ origin }, "Blocked a request from an origin that is not on the allowlist");
+        callback(null, false);
       },
       credentials: true,
       methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
