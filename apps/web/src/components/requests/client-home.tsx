@@ -12,6 +12,8 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useServiceRequests } from "@/hooks/use-service-requests";
 import { useVehicles } from "@/hooks/use-vehicles";
 import { formatDateTime } from "@/lib/format";
+import { StageDots } from "@/components/requests/stage-dots";
+import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
 import { STATUS_META, statusTone } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -81,22 +83,36 @@ export function ClientHome() {
             const category = getSymptomCategory(active.symptomCategory);
 
             return (
-              <div className="mt-5 rounded-lg border border-border bg-card p-5 sm:p-6">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <span className="font-mono text-sm text-muted-foreground">{active.reference}</span>
-                  <Badge tone={statusTone(active.status)} icon={meta.icon}>
-                    {meta.customerLabel}
-                  </Badge>
+              <div className="mt-5 rounded-xl border border-border bg-card p-5 sm:p-6">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-7">
+                  <VehicleSilhouette
+                    make={active.vehicle.make}
+                    model={active.vehicle.model}
+                    className="w-40 self-center sm:w-48 sm:shrink-0"
+                  />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {active.reference}
+                      </span>
+                      <Badge tone={statusTone(active.status)} icon={meta.icon}>
+                        {meta.customerLabel}
+                      </Badge>
+                    </div>
+
+                    <h3 className="mt-3 font-display text-2xl font-semibold text-card-foreground">
+                      {active.vehicle.make} {active.vehicle.model}
+                    </h3>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      {active.vehicle.registrationNo}
+                    </p>
+
+                    <StageDots status={active.status} className="mt-4" />
+
+                    <p className="mt-4 text-base text-muted-foreground">{meta.description}</p>
+                  </div>
                 </div>
-
-                <h3 className="mt-3 font-display text-2xl font-semibold text-card-foreground">
-                  {active.vehicle.make} {active.vehicle.model}
-                </h3>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {active.vehicle.registrationNo}
-                </p>
-
-                <p className="mt-4 text-base text-muted-foreground">{meta.description}</p>
 
                 <dl className="mt-5 grid gap-x-8 gap-y-3 border-t border-border pt-4 sm:grid-cols-2">
                   <div>
@@ -116,11 +132,15 @@ export function ClientHome() {
                   </div>
                 </dl>
 
+                {/* When the booking is waiting on the customer, say so here
+                    rather than making them find it on the detail page. */}
                 <Link
                   href={`/dashboard/requests/${active.id}`}
                   className={cn(buttonVariants({ variant: "accent" }), "mt-6")}
                 >
-                  See the full timeline
+                  {active.status === "AWAITING_APPROVAL"
+                    ? "Answer the estimate"
+                    : "See the full timeline"}
                   <ArrowRight aria-hidden size={18} />
                 </Link>
 
