@@ -86,7 +86,8 @@ export function AccountNav() {
         className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "max-w-40 gap-2 px-3")}
       >
         <UserRound aria-hidden size={18} />
-        <span className="truncate">{firstName}</span>
+        {/* The name is the first thing to go when the header runs out of room. */}
+        <span className="sr-only sm:not-sr-only sm:truncate">{firstName}</span>
         <ChevronDown
           aria-hidden
           size={16}
@@ -128,7 +129,7 @@ export function AccountNav() {
             </Link>
 
             <Link
-              href="/dashboard/account"
+              href="/account"
               role="menuitem"
               onClick={() => setIsOpen(false)}
               className="flex min-h-12 items-center gap-3 px-4 text-base text-popover-foreground transition-colors hover:bg-muted"

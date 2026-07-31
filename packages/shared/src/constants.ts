@@ -53,29 +53,54 @@ export const SECTION_LABELS: Readonly<Record<Section, string>> = {
   ELECTRICAL: "Electrical",
 };
 
+/**
+ * Neutral labels, used on the workshop's own screens and in API messages.
+ * "Awaiting approval" rather than "awaiting your approval", because on a
+ * technician's job card the approval is not theirs to give.
+ */
 export const REQUEST_STATUS_LABELS: Readonly<Record<RequestStatus, string>> = {
   SUBMITTED: "Submitted",
   SCHEDULED: "Scheduled",
   IN_PROGRESS: "In progress",
-  AWAITING_APPROVAL: "Awaiting your approval",
+  AWAITING_APPROVAL: "Awaiting approval",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
 };
 
 /**
- * Business details shown on the public site and on printed invoices.
+ * The same statuses said to the customer, where the second person is right and
+ * the waiting is on them.
+ */
+export const CUSTOMER_STATUS_LABELS: Readonly<Record<RequestStatus, string>> = {
+  ...REQUEST_STATUS_LABELS,
+  AWAITING_APPROVAL: "Awaiting your approval",
+};
+
+/**
+ * Business details shown on the public site and on printed invoices. The name,
+ * short name, tagline, phone number and the four locations are taken from the
+ * company's own flier.
  *
- * The phone number and email are placeholders until the real ones are
- * confirmed, and there is no street line yet on purpose rather than an
- * invented one. The city is correct: the workshop is in Kumasi.
+ * The email is still a placeholder rather than an invented one, and there is no
+ * street line because the flier does not give one.
  */
 export const BUSINESS = {
   name: "Chrysmec Auto Center",
-  tagline: "Vehicle repair and servicing, booked properly.",
+  shortName: "CAC",
+  tagline: "Your online mechanical engineer.",
   city: "Kumasi",
-  addressLines: ["Kumasi, Ashanti Region"],
-  phone: "+233 32 000 0000",
+  /** Kumasi is the main workshop. The rest are the other branches on the flier. */
+  locations: ["Kumasi", "Techiman", "Accra", "Sunyani"],
+  addressLines: ["Kumasi, Techiman, Accra and Sunyani"],
+  phone: "0555695431",
+  /** The same number in the form a phone dialer needs. */
+  phoneHref: "+233555695431",
   email: "hello@chrysmec.com",
+  services: [
+    "General mechanical solutions",
+    "Car diagnosis",
+    "Auto electrical solutions",
+  ],
   openingHours: [
     { days: "Monday to Friday", hours: "07:30 to 18:00" },
     { days: "Saturday", hours: "08:00 to 15:00" },

@@ -9,84 +9,103 @@
 
 /* ---------------------------------------------------------------------------
    Colour tokens
-   Warm paper, deep ink, pine structure, copper accent. Values are HSL channels
-   so they can be composed with alpha where needed.
+
+   The client's brand, taken from the Chrysmec Auto Center flier: a deep blue
+   wordmark and a red used sparingly for the one thing you are meant to act on.
+   White carries the pages, blue carries the structure, red marks the single
+   most important action on a screen.
+
+   Every pairing the product actually paints clears WCAG AA in both modes.
+   Values are HSL channels so they can be composed with alpha where needed.
 --------------------------------------------------------------------------- */
 
 :root {
-  --background: 38 33% 97%;         /* #FAF7F2 warm paper */
-  --foreground: 30 10% 10%;         /* #1C1917 ink */
+  --background: 228 45% 98%;        /* #F7F8FC barely tinted white */
+  --foreground: 237 37% 12%;        /* #14152B blue black ink */
 
-  --primary: 166 46% 17%;           /* #17403A deep pine */
-  --primary-hover: 166 40% 24%;     /* #245C52 */
-  --primary-foreground: 38 33% 97%;
+  --primary: 238 52% 38%;           /* #2E3192 brand blue */
+  --primary-hover: 238 50% 45%;     /* #3A3EAE */
+  --primary-foreground: 0 0% 100%;
 
-  --accent: 20 72% 38%;             /* #A64B1B copper */
-  --accent-hover: 20 74% 31%;       /* #8A3D14 */
-  --accent-foreground: 0 0% 100%;   /* white text on copper */
-  --accent-subtle: 26 70% 93%;      /* #FAEDE3 badge fill */
-  --accent-on-dark: 24 80% 56%;     /* #EB8B3D copper that holds up on a pine or ink surface */
+  --accent: 356 82% 43%;            /* #C81420 brand red */
+  --accent-hover: 356 82% 35%;      /* #A5101A */
+  --accent-foreground: 0 0% 100%;   /* white text on red */
+  --accent-subtle: 0 81% 96%;       /* #FDECEC badge fill */
+  --accent-on-dark: 0 100% 71%;     /* #FF6B6B red that holds up on a blue surface */
 
-  --card: 0 0% 100%;                /* white lifts off the paper background */
-  --card-foreground: 30 10% 10%;
+  /*
+    Large brand panels, such as the column beside the sign in form. Separate
+    from --primary because a panel and a button want opposite things of a
+    colour once the page goes dark.
+  */
+  --brand-surface: 238 52% 38%;     /* #2E3192 */
+  --brand-surface-foreground: 0 0% 100%;
+
+  --card: 0 0% 100%;                /* white lifts off the tinted background */
+  --card-foreground: 237 37% 12%;
   --popover: 0 0% 100%;
-  --popover-foreground: 30 10% 10%;
-  --secondary: 36 25% 94%;
-  --secondary-foreground: 166 46% 17%;
+  --popover-foreground: 237 37% 12%;
+  --secondary: 228 42% 95%;
+  --secondary-foreground: 238 52% 38%;
 
-  --muted: 36 25% 94%;              /* #F2EEE7 */
-  --muted-foreground: 30 7% 38%;    /* #67615C */
-  --border: 34 20% 88%;             /* #E6DFD5 hairline */
-  --input: 34 20% 82%;
-  --ring: 20 72% 38%;
+  --muted: 228 42% 95%;             /* #EEF0F8 */
+  --muted-foreground: 232 17% 41%;  /* #565B7A */
+  --border: 226 36% 91%;            /* #DFE3F0 hairline */
+  --input: 226 30% 84%;
+  --ring: 238 52% 38%;
 
-  --success: 155 50% 30%;           /* #26735B */
+  --success: 162 70% 22%;           /* #116149 */
   --success-foreground: 0 0% 100%;
-  --warning: 36 80% 42%;            /* #C1841A */
+  --warning: 38 92% 28%;            /* #8A5A06 */
   --warning-foreground: 0 0% 100%;
-  --destructive: 4 65% 42%;         /* #B0332A */
+  --destructive: 357 82% 39%;       /* #B3121B */
   --destructive-foreground: 0 0% 100%;
 
   --radius: 0.5rem;
 }
 
 /*
-  Dark mode is designed, not inverted. Paper becomes a warm near-black, surfaces
-  lift with a lighter warm charcoal rather than a shadow, pine lightens so it
-  still reads as a colour, and copper brightens to stay the accent.
+  Dark mode is designed, not inverted. White becomes a deep blue black, surfaces
+  lift with a lighter navy rather than a shadow, the brand blue lightens so it
+  still reads as blue against it, and the red warms so it stays the accent
+  without glaring.
 */
 .dark {
-  --background: 30 8% 8%;           /* #16140F */
-  --foreground: 38 30% 94%;         /* #F3EEE5 */
+  --background: 231 37% 7%;         /* #0C0E1A */
+  --foreground: 231 39% 94%;        /* #E8EAF5 */
 
-  --primary: 166 30% 32%;           /* #396B60 */
-  --primary-hover: 166 30% 40%;
-  --primary-foreground: 38 30% 96%;
+  --primary: 236 70% 70%;           /* #7C83E8 */
+  --primary-hover: 236 75% 76%;     /* #949AF0 */
+  --primary-foreground: 231 37% 7%; /* ink text on light blue */
 
-  --accent: 24 80% 56%;             /* #EB8B3D */
-  --accent-hover: 24 80% 64%;
-  --accent-foreground: 30 10% 10%;  /* ink text on bright copper */
-  --accent-subtle: 22 40% 18%;
+  --accent: 0 100% 71%;             /* #FF6B6B */
+  --accent-hover: 0 100% 77%;       /* #FF8A8A */
+  --accent-foreground: 237 37% 12%; /* ink text on bright red */
+  --accent-subtle: 330 24% 13%;
+  --accent-on-dark: 0 100% 71%;
 
-  --card: 30 8% 11%;
-  --card-foreground: 38 30% 94%;
-  --popover: 30 8% 11%;
-  --popover-foreground: 38 30% 94%;
-  --secondary: 30 7% 16%;
-  --secondary-foreground: 38 30% 94%;
+  --brand-surface: 231 41% 16%;     /* #191D3A deep navy panel */
+  --brand-surface-foreground: 231 39% 94%;
 
-  --muted: 30 7% 15%;
-  --muted-foreground: 36 12% 70%;
-  --border: 30 8% 22%;
-  --input: 30 8% 26%;
-  --ring: 24 80% 56%;
+  --card: 230 31% 11%;              /* #141726 */
+  --card-foreground: 231 39% 94%;
+  --popover: 230 31% 11%;
+  --popover-foreground: 231 39% 94%;
+  --secondary: 230 29% 15%;
+  --secondary-foreground: 231 39% 94%;
 
-  --success: 155 40% 48%;
-  --success-foreground: 30 8% 8%;
-  --warning: 36 75% 58%;
-  --warning-foreground: 30 8% 8%;
-  --destructive: 4 65% 58%;
-  --destructive-foreground: 30 8% 8%;
+  --muted: 230 29% 15%;             /* #1C2033 */
+  --muted-foreground: 229 23% 72%;  /* #A8AEC8 */
+  --border: 228 26% 22%;            /* #2A3048 */
+  --input: 228 26% 28%;
+  --ring: 236 70% 70%;
+
+  --success: 160 43% 51%;           /* #4BB893 */
+  --success-foreground: 231 37% 7%;
+  --warning: 38 71% 58%;            /* #E0A94A */
+  --warning-foreground: 231 37% 7%;
+  --destructive: 4 100% 72%;        /* #FF7B72 */
+  --destructive-foreground: 231 37% 7%;
 }
 
 /* ---------------------------------------------------------------------------
@@ -106,6 +125,9 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-accent-subtle: hsl(var(--accent-subtle));
   --color-accent-on-dark: hsl(var(--accent-on-dark));
+
+  --color-brand-surface: hsl(var(--brand-surface));
+  --color-brand-surface-foreground: hsl(var(--brand-surface-foreground));
 
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));

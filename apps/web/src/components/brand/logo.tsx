@@ -20,12 +20,12 @@ export function Logo({
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <LogoMark className={cn("size-9 shrink-0", markClassName)} accentClassName={accentClassName} />
-      <span className="flex min-w-0 flex-col leading-none">
-        <span className="truncate font-display text-xl font-semibold tracking-[-0.02em]">
+      <span className="flex flex-col leading-none">
+        <span className="font-display text-xl font-semibold tracking-[-0.02em] whitespace-nowrap">
           Chrysmec
         </span>
         {showDescriptor ? (
-          <span className="mt-1 truncate font-mono text-[0.625rem] tracking-[0.18em] uppercase opacity-70">
+          <span className="mt-1 font-mono text-[0.625rem] tracking-[0.18em] whitespace-nowrap uppercase opacity-70">
             Auto Center
           </span>
         ) : null}
