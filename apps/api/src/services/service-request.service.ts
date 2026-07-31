@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import {
   type CreateServiceRequest,
   type PaginationMeta,
+  type RequestInvoice,
   REQUEST_STATUS_LABELS,
   type RequestStatus,
   type ServiceRequest,
@@ -18,7 +19,12 @@ import { HttpError } from "../lib/http-error";
 import { logger } from "../lib/logger";
 import { TRANSACTION_OPTIONS, prisma } from "../lib/prisma";
 import type { AuthenticatedUser } from "../types/auth";
-import { serviceRequestInclude, toServiceRequest, toStatusEvent } from "./mappers";
+import {
+  serviceRequestInclude,
+  toServiceRequest,
+  toStatusEvent,
+  toWorkLogEntry,
+} from "./mappers";
 
 export type CreateResult = { serviceRequest: ServiceRequest; created: boolean };
 
@@ -307,6 +313,44 @@ export async function updateServiceRequest(
   }, TRANSACTION_OPTIONS);
 
   return toServiceRequest(updated);
+}
+
+/**
+ * What was done on the vehicle and what it came to, for whoever is allowed to
+ * see the booking. A customer has no access to the workshop's job screens, so
+ * without this they can be told what the estimate was and never what they were
+ * actually charged.
+ */
+export async function getRequestInvoice(
+  user: AuthenticatedUser,
+  id: string,
+): Promise<RequestInvoice> {
+  const request = await findVisible(user, id);
+
+  const lines = request.job
+    ? await prisma.workLogEntry.findMany({
+        where: { jobId: request.job.id },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
+
+  const sumOf = (type: "PART" | "LABOUR"): Prisma.Decimal =>
+    lines
+      .filter((line) => line.lineType === type)
+      .reduce((total, line) => total.add(line.unitCost.mul(line.quantity)), new Prisma.Decimal(0));
+
+  const partsTotal = sumOf("PART");
+  const labourTotal = sumOf("LABOUR");
+
+  return {
+    reference: referenceFromId(id),
+    lines: lines.map(toWorkLogEntry),
+    partsTotal: partsTotal.toFixed(2),
+    labourTotal: labourTotal.toFixed(2),
+    total: partsTotal.add(labourTotal).toFixed(2),
+    estimatedCost: request.estimatedCost ? request.estimatedCost.toFixed(2) : null,
+    isFinal: request.status === "COMPLETED",
+  };
 }
 
 /**

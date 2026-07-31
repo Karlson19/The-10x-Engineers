@@ -13,6 +13,7 @@ import {
   createServiceRequest,
   deleteServiceRequest,
   getServiceRequest,
+  getRequestInvoice,
   getTimeline,
   listServiceRequests,
   updateServiceRequest,
@@ -88,4 +89,12 @@ export const timeline: RequestHandler = async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
   res.status(200).json({ data: await getTimeline(user, id) });
+};
+
+/** What was done and what it came to, for whoever owns the booking. */
+export const invoice: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
+  const { id } = idParamSchema.parse(req.params);
+
+  res.status(200).json({ invoice: await getRequestInvoice(user, id) });
 };

@@ -1,5 +1,9 @@
+import { z } from "zod";
 import {
+  type CreateFeedback,
   type CreateServiceRequest,
+  type Feedback,
+  type RequestInvoice,
   type ServiceCatalogueResponse,
   type ServiceRequest,
   type ServiceRequestListQuery,
@@ -8,12 +12,18 @@ import {
   type StatusEvent,
   type UpdateServiceRequest,
   type UpdateStatusRequest,
+  feedbackResponseSchema,
+  feedbackSchema,
+  requestInvoiceResponseSchema,
   serviceCatalogueResponseSchema,
   serviceRequestListResponseSchema,
   serviceRequestResponseSchema,
   timelineResponseSchema,
 } from "@chrysmec/shared";
 import { apiRequest, apiRequestVoid } from "./client";
+
+/** Reading feedback answers null when none has been left, which is normal. */
+const feedbackReadSchema = z.object({ feedback: feedbackSchema.nullable() });
 
 export type RequestFilters = Partial<Pick<ServiceRequestListQuery, "status" | "vehicleId">>;
 
@@ -83,4 +93,26 @@ export function deleteServiceRequest(id: string): Promise<void> {
 export function fetchCatalogue(section?: Section): Promise<ServiceCatalogueResponse> {
   const query = section ? `?section=${section}` : "";
   return apiRequest(`/services${query}`, serviceCatalogueResponseSchema);
+}
+
+/** What was done on the vehicle and what it came to. */
+export async function fetchRequestInvoice(id: string): Promise<RequestInvoice> {
+  const result = await apiRequest(
+    `/service-requests/${id}/invoice`,
+    requestInvoiceResponseSchema,
+  );
+  return result.invoice;
+}
+
+export async function fetchFeedback(id: string): Promise<Feedback | null> {
+  const result = await apiRequest(`/service-requests/${id}/feedback`, feedbackReadSchema);
+  return result.feedback;
+}
+
+export async function leaveFeedback(id: string, input: CreateFeedback): Promise<Feedback> {
+  const result = await apiRequest(`/service-requests/${id}/feedback`, feedbackResponseSchema, {
+    method: "POST",
+    body: input,
+  });
+  return result.feedback;
 }

@@ -132,6 +132,27 @@ export const jobListQuerySchema = paginationQuerySchema.extend({
 });
 export type JobListQuery = z.infer<typeof jobListQuerySchema>;
 
+/**
+ * What was done and what it came to, for the customer whose vehicle it was.
+ *
+ * Separate from the work log a technician edits: this is scoped by ownership of
+ * the booking rather than assignment of the job, so the person paying can read
+ * it without being given access to the workshop's own screens.
+ */
+export const requestInvoiceSchema = z.object({
+  reference: z.string(),
+  lines: z.array(workLogEntrySchema),
+  partsTotal: moneySchema,
+  labourTotal: moneySchema,
+  total: moneySchema,
+  estimatedCost: moneySchema.nullable(),
+  /** True once the booking is completed. Before that it is work so far. */
+  isFinal: z.boolean(),
+});
+export type RequestInvoice = z.infer<typeof requestInvoiceSchema>;
+
+export const requestInvoiceResponseSchema = z.object({ invoice: requestInvoiceSchema });
+
 export const jobResponseSchema = z.object({ job: jobSchema });
 export const jobListResponseSchema = z.object({
   data: z.array(jobSchema),

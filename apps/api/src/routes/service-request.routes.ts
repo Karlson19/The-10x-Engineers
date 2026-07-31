@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   create,
   getOne,
+  invoice,
   leaveFeedback,
   list,
   patch,
@@ -28,6 +29,9 @@ serviceRequestRouter.patch("/:id", patch);
 serviceRequestRouter.patch("/:id/status", patchStatus);
 serviceRequestRouter.delete("/:id", remove);
 serviceRequestRouter.get("/:id/timeline", timeline);
+// What was done and what it cost. Scoped by ownership of the booking, so a
+// customer can read their own bill without access to the workshop's screens.
+serviceRequestRouter.get("/:id/invoice", invoice);
 
 // Feedback closes the loop after a job. Only the customer leaves it, and the
 // service checks the work is actually finished.
