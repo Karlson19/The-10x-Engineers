@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LoginRequest, PublicUser, RegisterRequest } from "@chrysmec/shared";
 import { login, logout, register, restoreSession } from "@/lib/api/auth";
 import { getSessionEpoch } from "@/lib/api/token-store";
+import { clearApiCache } from "@/lib/offline/api-cache";
 
 export const AUTH_QUERY_KEY = ["auth", "session"] as const;
 
@@ -51,28 +52,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refetchOnMount: false,
   });
 
+  /**
+   * The service worker's cache of API reads belongs to whoever filled it, and
+   * it survives both signing out and signing in. Emptying it on either side of
+   * a session change stops a stale read being handed back before the network
+   * answers, which showed people the bookings of an account they had just left.
+   */
+  const adoptSession = useCallback(
+    async (user: PublicUser) => {
+      await clearApiCache();
+      queryClient.setQueryData(AUTH_QUERY_KEY, user);
+    },
+    [queryClient],
+  );
+
   const signInMutation = useMutation({
     mutationFn: login,
-    onSuccess(result) {
-      queryClient.setQueryData(AUTH_QUERY_KEY, result.user);
-    },
+    onSuccess: (result) => adoptSession(result.user),
   });
 
   const signUpMutation = useMutation({
     mutationFn: register,
-    onSuccess(result) {
-      queryClient.setQueryData(AUTH_QUERY_KEY, result.user);
-    },
+    onSuccess: (result) => adoptSession(result.user),
   });
 
   const signOutMutation = useMutation({
     mutationFn: logout,
-    onSettled() {
+    async onSettled() {
       // Nothing cached belongs to the next person to use this browser. Clearing
       // comes first, because it would otherwise wipe the null written here and
       // leave the session query to fetch itself back again.
       queryClient.clear();
       queryClient.setQueryData(AUTH_QUERY_KEY, null);
+      await clearApiCache();
     },
   });
 
