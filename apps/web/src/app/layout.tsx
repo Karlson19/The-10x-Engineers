@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { BUSINESS } from "@chrysmec/shared";
+import { AppProviders } from "@/components/providers/app-providers";
 import { MotionProvider } from "@/components/shared/motion-provider";
 import { ThemeProvider, themeInitScript } from "@/components/shared/theme-provider";
 import { fontVariables } from "@/lib/fonts";
@@ -18,8 +19,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAF7F2" },
-    { media: "(prefers-color-scheme: dark)", color: "#16140F" },
+    { media: "(prefers-color-scheme: light)", color: "#F7F8FC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0C0E1A" },
   ],
 };
 
@@ -32,7 +33,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${fontVariables} min-h-dvh antialiased`}>
         <ThemeProvider>
-          <MotionProvider>{children}</MotionProvider>
+          <MotionProvider>
+            {/*
+              One query client and one session for the whole app. These used to
+              sit in each route group's layout, which meant moving between
+              groups, signing in being the obvious case, threw the cache away
+              and restored the session all over again. That is what put people
+              into the account the browser was last used with.
+            */}
+            <AppProviders>{children}</AppProviders>
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

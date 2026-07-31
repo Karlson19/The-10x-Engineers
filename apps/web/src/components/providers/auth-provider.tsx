@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LoginRequest, PublicUser, RegisterRequest } from "@chrysmec/shared";
 import { login, logout, register, restoreSession } from "@/lib/api/auth";
+import { getSessionEpoch } from "@/lib/api/token-store";
 
 export const AUTH_QUERY_KEY = ["auth", "session"] as const;
 
@@ -26,11 +27,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Runs once on load. The access token only lives in memory, so after a reload
    * the httpOnly refresh cookie is what brings the session back. A null result
    * means nobody is signed in, which is a normal answer rather than an error.
+   *
+   * This can still be in flight when somebody signs in, and on a cold API it
+   * usually is. Its answer describes the session that existed when it started,
+   * so if the session has moved on since it must not be written: doing so drops
+   * you into the previous account, or signs you straight back out when the old
+   * cookie turns out to be dead.
    */
   const session = useQuery({
     queryKey: AUTH_QUERY_KEY,
     queryFn: async (): Promise<PublicUser | null> => {
+      const epoch = getSessionEpoch();
       const result = await restoreSession();
+
+      if (getSessionEpoch() !== epoch) {
+        return queryClient.getQueryData<PublicUser | null>(AUTH_QUERY_KEY) ?? null;
+      }
+
       return result?.user ?? null;
     },
     retry: false,
@@ -55,9 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOutMutation = useMutation({
     mutationFn: logout,
     onSettled() {
-      queryClient.setQueryData(AUTH_QUERY_KEY, null);
-      // Nothing cached belongs to the next person to use this browser.
+      // Nothing cached belongs to the next person to use this browser. Clearing
+      // comes first, because it would otherwise wipe the null written here and
+      // leave the session query to fetch itself back again.
       queryClient.clear();
+      queryClient.setQueryData(AUTH_QUERY_KEY, null);
     },
   });
 

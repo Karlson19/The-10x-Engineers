@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { type ErrorCode, errorEnvelopeSchema, refreshResponseSchema } from "@chrysmec/shared";
-import { getAccessToken, setAccessToken } from "./token-store";
+import { getAccessToken, getSessionEpoch, setRefreshedAccessToken } from "./token-store";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
 
@@ -70,8 +70,18 @@ async function toApiError(response: Response): Promise<ApiError> {
  */
 let refreshInFlight: Promise<boolean> | null = null;
 
+/**
+ * Exchanges the refresh cookie for a new access token.
+ *
+ * The epoch is captured before the request goes out and checked before anything
+ * is written. Without that, a refresh for the previous session that is still in
+ * flight when somebody signs in would land afterwards and put the previous
+ * user's token back, which is exactly what a cold API makes likely.
+ */
 async function refreshAccessToken(): Promise<boolean> {
   refreshInFlight ??= (async () => {
+    const epoch = getSessionEpoch();
+
     try {
       const response = await fetch(`${API_URL}/auth/refresh`, {
         method: "POST",
@@ -79,20 +89,21 @@ async function refreshAccessToken(): Promise<boolean> {
       });
 
       if (!response.ok) {
-        setAccessToken(null);
+        setRefreshedAccessToken(null, epoch);
         return false;
       }
 
       const parsed = refreshResponseSchema.safeParse(await response.json());
       if (!parsed.success) {
-        setAccessToken(null);
+        setRefreshedAccessToken(null, epoch);
         return false;
       }
 
-      setAccessToken(parsed.data.accessToken);
-      return true;
+      // False here means somebody signed in while this was in flight, so this
+      // token is already out of date and the caller must not act on it.
+      return setRefreshedAccessToken(parsed.data.accessToken, epoch);
     } catch {
-      setAccessToken(null);
+      setRefreshedAccessToken(null, epoch);
       return false;
     } finally {
       refreshInFlight = null;
