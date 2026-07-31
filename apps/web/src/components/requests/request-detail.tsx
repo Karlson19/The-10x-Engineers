@@ -10,6 +10,8 @@ import {
   getSymptomCategory,
 } from "@chrysmec/shared";
 import { EstimateApproval } from "@/components/requests/estimate-approval";
+import { RequestFeedback } from "@/components/requests/request-feedback";
+import { RequestInvoicePanel } from "@/components/requests/request-invoice";
 import { StatusTimeline } from "@/components/requests/status-timeline";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +41,7 @@ export function RequestDetail({ id }: { id: string }) {
   const justBooked = searchParams.get("booked") === "1";
 
   const request = useServiceRequest(id);
-  const timeline = useTimeline(id);
+  const timeline = useTimeline(id, request.data?.status);
   const deleteMutation = useDeleteServiceRequest();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -159,6 +161,11 @@ export function RequestDetail({ id }: { id: string }) {
       </section>
 
       {data.status === "AWAITING_APPROVAL" ? <EstimateApproval request={data} /> : null}
+
+      {/* What was done and what it came to, once there is anything to show. */}
+      {data.status === "CANCELLED" ? null : <RequestInvoicePanel requestId={id} />}
+
+      {data.status === "COMPLETED" ? <RequestFeedback requestId={id} /> : null}
 
       <section className="mt-12">
         <h2 className="mb-2 border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">

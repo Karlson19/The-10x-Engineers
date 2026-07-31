@@ -1,15 +1,24 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateServiceRequest, Section, UpdateStatusRequest } from "@chrysmec/shared";
+import type {
+  CreateFeedback,
+  CreateServiceRequest,
+  RequestStatus,
+  Section,
+  UpdateStatusRequest,
+} from "@chrysmec/shared";
 import {
   type RequestFilters,
   createServiceRequest,
   deleteServiceRequest,
   fetchCatalogue,
+  fetchFeedback,
+  fetchRequestInvoice,
   fetchServiceRequest,
   fetchServiceRequests,
   fetchTimeline,
+  leaveFeedback,
   updateServiceRequestStatus,
 } from "@/lib/api/service-requests";
 
@@ -22,19 +31,68 @@ export function useServiceRequests(filters: RequestFilters = {}) {
   });
 }
 
+/**
+ * How often a booking still being worked on re-checks itself.
+ *
+ * The promise of this product is that you always know where your vehicle is,
+ * which a page that only updates when you reload it does not keep. Paused
+ * automatically while the tab is in the background, so it costs nothing on a
+ * metered connection when nobody is looking.
+ */
+const LIVE_POLL_MS = 45_000;
+
+/** Terminal bookings never change again, so they stop asking. */
+function pollWhileOpen(status: RequestStatus | undefined): number | false {
+  if (status === "COMPLETED" || status === "CANCELLED") {
+    return false;
+  }
+  return LIVE_POLL_MS;
+}
+
 export function useServiceRequest(id: string) {
   return useQuery({
     queryKey: [...REQUESTS_KEY, "detail", id] as const,
     queryFn: () => fetchServiceRequest(id),
     enabled: id.length > 0,
+    refetchInterval: (query) => pollWhileOpen(query.state.data?.status),
   });
 }
 
-export function useTimeline(id: string) {
+export function useTimeline(id: string, status?: RequestStatus) {
   return useQuery({
     queryKey: [...REQUESTS_KEY, "timeline", id] as const,
     queryFn: () => fetchTimeline(id),
     enabled: id.length > 0,
+    // Follows the booking: a new stage should appear on the stepper without the
+    // customer having to reload to find it.
+    refetchInterval: pollWhileOpen(status),
+  });
+}
+
+export function useRequestInvoice(id: string) {
+  return useQuery({
+    queryKey: [...REQUESTS_KEY, "invoice", id] as const,
+    queryFn: () => fetchRequestInvoice(id),
+    enabled: id.length > 0,
+  });
+}
+
+export function useFeedback(id: string) {
+  return useQuery({
+    queryKey: [...REQUESTS_KEY, "feedback", id] as const,
+    queryFn: () => fetchFeedback(id),
+    enabled: id.length > 0,
+  });
+}
+
+export function useLeaveFeedback(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateFeedback) => leaveFeedback(id, input),
+    onSuccess(feedback) {
+      queryClient.setQueryData([...REQUESTS_KEY, "feedback", id], feedback);
+    },
   });
 }
 
