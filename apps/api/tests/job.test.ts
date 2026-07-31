@@ -377,6 +377,39 @@ describe("the estimate and approval loop", () => {
     expect(approved.body.serviceRequest.status).toBe("IN_PROGRESS");
   });
 
+  it("lets the customer decline an estimate, which cancels the booking", async () => {
+    const serviceRequestId = await createBooking();
+    await assignJob(serviceRequestId, mechanic.id);
+
+    await request(app)
+      .patch(`/api/v1/service-requests/${serviceRequestId}/status`)
+      .set("Authorization", `Bearer ${mechanicToken}`)
+      .send({ status: "IN_PROGRESS" });
+    await request(app)
+      .patch(`/api/v1/service-requests/${serviceRequestId}/status`)
+      .set("Authorization", `Bearer ${mechanicToken}`)
+      .send({ status: "AWAITING_APPROVAL", estimatedCost: "640.00" });
+
+    const declined = await request(app)
+      .patch(`/api/v1/service-requests/${serviceRequestId}/status`)
+      .set("Authorization", `Bearer ${clientToken}`)
+      .send({ status: "CANCELLED" });
+
+    expect(declined.status).toBe(200);
+    expect(declined.body.serviceRequest.status).toBe("CANCELLED");
+
+    // The decision has to be on the timeline, because it is the record of who
+    // stopped the work and when.
+    const timeline = await request(app)
+      .get(`/api/v1/service-requests/${serviceRequestId}/timeline`)
+      .set("Authorization", `Bearer ${clientToken}`);
+
+    expect(timeline.body.data.at(-1)).toMatchObject({
+      fromStatus: "AWAITING_APPROVAL",
+      toStatus: "CANCELLED",
+    });
+  });
+
   it("refuses a customer any other status move", async () => {
     const serviceRequestId = await createBooking();
 

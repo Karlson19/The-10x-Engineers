@@ -9,10 +9,12 @@ import {
   describeSymptomAnswers,
   getSymptomCategory,
 } from "@chrysmec/shared";
+import { EstimateApproval } from "@/components/requests/estimate-approval";
 import { StatusTimeline } from "@/components/requests/status-timeline";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { useDeleteServiceRequest, useServiceRequest, useTimeline } from "@/hooks/use-service-requests";
@@ -40,6 +42,7 @@ export function RequestDetail({ id }: { id: string }) {
   const timeline = useTimeline(id);
   const deleteMutation = useDeleteServiceRequest();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   if (request.isPending) {
     return (
@@ -92,6 +95,7 @@ export function RequestDetail({ id }: { id: string }) {
       await deleteMutation.mutateAsync(id);
       router.replace("/dashboard/requests");
     } catch (error) {
+      setIsConfirmingDelete(false);
       setDeleteError(
         error instanceof ApiError
           ? error.message
@@ -119,7 +123,7 @@ export function RequestDetail({ id }: { id: string }) {
       <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="font-mono text-sm text-muted-foreground">{data.reference}</span>
         <Badge tone={statusTone(data.status)} icon={meta.icon}>
-          {meta.label}
+          {meta.customerLabel}
         </Badge>
       </div>
 
@@ -153,6 +157,8 @@ export function RequestDetail({ id }: { id: string }) {
           <StatusTimeline status={data.status} events={timeline.data} />
         )}
       </section>
+
+      {data.status === "AWAITING_APPROVAL" ? <EstimateApproval request={data} /> : null}
 
       <section className="mt-12">
         <h2 className="mb-2 border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
@@ -222,17 +228,22 @@ export function RequestDetail({ id }: { id: string }) {
           <p className="text-base text-muted-foreground">
             This booking has not been scheduled yet, so you can still remove it.
           </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => void handleDelete()}
-            isPending={deleteMutation.isPending}
-            pendingLabel="Removing"
-          >
+          <Button variant="outline" className="mt-4" onClick={() => setIsConfirmingDelete(true)}>
             Remove this booking
           </Button>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={isConfirmingDelete}
+        onClose={() => setIsConfirmingDelete(false)}
+        onConfirm={() => void handleDelete()}
+        title="Remove this booking?"
+        description={`${data.reference} will be removed and the workshop will not see it. This cannot be undone.`}
+        confirmLabel="Remove it"
+        isPending={deleteMutation.isPending}
+        pendingLabel="Removing"
+      />
     </div>
   );
 }
