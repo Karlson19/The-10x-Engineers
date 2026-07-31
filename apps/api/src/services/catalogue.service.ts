@@ -40,6 +40,21 @@ export async function listCatalogue(
   return items.map(toCatalogueItem);
 }
 
+/**
+ * The same list for a visitor who has not signed in, used by the price list on
+ * the public site. A workshop's prices are public information, so this is
+ * deliberate rather than a gap: it returns active items only and nothing about
+ * who booked what.
+ */
+export async function listPublicCatalogue(): Promise<ServiceCatalogItem[]> {
+  const items = await prisma.serviceCatalogItem.findMany({
+    where: { isActive: true },
+    orderBy: [{ section: "asc" }, { basePrice: "asc" }],
+  });
+
+  return items.map(toCatalogueItem);
+}
+
 export async function createCatalogueItem(
   input: CreateServiceCatalogItem,
 ): Promise<ServiceCatalogItem> {

@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Phone } from "lucide-react";
+import { ArrowRight, Check, MapPin, Phone } from "lucide-react";
 import { BUSINESS, SECTION_LABELS, SECTIONS, type Section } from "@chrysmec/shared";
 import { Logo } from "@/components/brand/logo";
 import { StageDial } from "@/components/brand/stage-dial";
+import { PriceList } from "@/components/marketing/price-list";
 import { SiteHeader } from "@/components/shared/site-header";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const SECTION_COPY: Record<Section, { standfirst: string; work: readonly string[] }> = {
   MECHANICAL: {
@@ -44,7 +46,7 @@ const PROCESS = [
   },
 ] as const;
 
-const phoneHref = `tel:${BUSINESS.phone.replace(/\s/g, "")}`;
+const phoneHref = `tel:${BUSINESS.phoneHref}`;
 
 export default function HomePage() {
   return (
@@ -52,25 +54,50 @@ export default function HomePage() {
       <SiteHeader />
 
       <main id="main" className="flex-1">
-        {/* Hero */}
-        <section className="paper-grain relative overflow-hidden border-b border-border">
-          <div className="mx-auto grid w-full max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-center lg:gap-8 lg:py-32">
+        {/*
+          The hero sits on the brand blue rather than on the page. It is the one
+          full-bleed block of colour in the whole site, which is what stops the
+          shopfront reading as text on a blank page.
+        */}
+        <section className="paper-grain relative overflow-hidden bg-brand-surface text-brand-surface-foreground">
+          <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-center lg:gap-8 lg:py-28">
             <div className="rise-in lg:col-span-7">
-              <p className="eyebrow">Mechanical and electrical | {BUSINESS.city}</p>
-              <h1 className="mt-5 max-w-[15ch] font-display text-4xl font-semibold text-balance text-foreground sm:text-5xl">
+              <p className="font-mono text-xs tracking-[0.16em] text-brand-surface-foreground/65 uppercase">
+                {BUSINESS.tagline}
+              </p>
+              <h1 className="mt-5 max-w-[15ch] font-display text-4xl font-semibold text-balance sm:text-5xl">
                 Your vehicle, handled by specialists.
               </h1>
-              <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+              <p className="mt-6 max-w-xl text-lg text-brand-surface-foreground/80">
                 Tell us what the car is doing and we will tell you what it needs, what it costs, and
                 when it will be ready. No guesswork, no chasing us for an update.
               </p>
 
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link href="/register" className={buttonVariants({ variant: "accent" })}>
-                  Create an account
+              {/* The three things the business actually sells, straight off the flier. */}
+              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
+                {BUSINESS.services.map((service) => (
+                  <li
+                    key={service}
+                    className="flex items-center gap-2 text-base text-brand-surface-foreground/90"
+                  >
+                    <Check aria-hidden size={18} className="shrink-0 text-accent-on-dark" />
+                    {service}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link href="/dashboard/book" className={buttonVariants({ variant: "accent" })}>
+                  Book a service
                   <ArrowRight aria-hidden size={18} />
                 </Link>
-                <a href={phoneHref} className={buttonVariants({ variant: "outline" })}>
+                <a
+                  href={phoneHref}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "border-brand-surface-foreground/30 text-brand-surface-foreground hover:border-brand-surface-foreground/60 hover:bg-brand-surface-foreground/10",
+                  )}
+                >
                   <Phone aria-hidden size={18} />
                   {BUSINESS.phone}
                 </a>
@@ -81,8 +108,23 @@ export default function HomePage() {
               className="pointer-events-none relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none"
               aria-hidden
             >
-              <StageDial className="opacity-90" />
+              <StageDial className="opacity-95" />
             </div>
+          </div>
+        </section>
+
+        {/* The branches, as a quiet strip under the hero. */}
+        <section className="border-b border-border bg-muted/60">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-8 gap-y-2 px-5 py-4 sm:px-8">
+            <p className="eyebrow">Find us in</p>
+            <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              {BUSINESS.locations.map((location) => (
+                <li key={location} className="flex items-center gap-2 text-base text-foreground">
+                  <MapPin aria-hidden size={16} className="shrink-0 text-primary" />
+                  {location}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
@@ -133,6 +175,22 @@ export default function HomePage() {
           })}
         </section>
 
+        {/* What it costs. Real catalogue prices, so nobody has to ring to ask. */}
+        <section className="border-b border-border bg-card">
+          <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+            <p className="eyebrow">What it costs</p>
+            <h2 className="mt-4 max-w-2xl font-display text-3xl font-semibold text-foreground">
+              Our prices, before you pick up the phone.
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+              A starting price for the work we do most. Anything beyond it is quoted as an estimate
+              you approve before a spanner is picked up.
+            </p>
+
+            <PriceList />
+          </div>
+        </section>
+
         {/* How it works */}
         <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
           <p className="eyebrow">How it works</p>
@@ -153,6 +211,16 @@ export default function HomePage() {
               </li>
             ))}
           </ol>
+
+          <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href="/dashboard/book" className={buttonVariants({ variant: "accent" })}>
+              Book a service
+              <ArrowRight aria-hidden size={18} />
+            </Link>
+            <Link href="/register" className={buttonVariants({ variant: "outline" })}>
+              Create an account
+            </Link>
+          </div>
         </section>
 
         {/* Visit */}
@@ -160,16 +228,16 @@ export default function HomePage() {
           <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-12">
             <div className="lg:col-span-5">
               <p className="eyebrow">Visit the workshop</p>
-              <address className="mt-4 text-2xl font-normal not-italic font-display text-foreground">
-                {BUSINESS.addressLines.map((line) => (
-                  <span key={line} className="block">
-                    {line}
+              <address className="mt-4 font-display text-2xl font-normal not-italic text-foreground">
+                {BUSINESS.locations.map((location) => (
+                  <span key={location} className="block">
+                    {location}
                   </span>
                 ))}
               </address>
               <a
                 href={phoneHref}
-                className="mt-6 inline-flex items-center gap-2 font-mono text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+                className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
               >
                 <Phone aria-hidden size={16} />
                 {BUSINESS.phone}

@@ -9,6 +9,7 @@ import { requireAuthUser } from "../middleware/authenticate";
 import {
   createCatalogueItem,
   listCatalogue,
+  listPublicCatalogue,
   retireCatalogueItem,
   updateCatalogueItem,
 } from "../services/catalogue.service";
@@ -18,6 +19,11 @@ export const list: RequestHandler = async (req, res) => {
   const query = serviceCatalogueQuerySchema.parse(req.query);
 
   res.status(200).json({ data: await listCatalogue(user, query) });
+};
+
+/** The price list on the public site. Active services only, no session needed. */
+export const listPublic: RequestHandler = async (_req, res) => {
+  res.status(200).json({ data: await listPublicCatalogue() });
 };
 
 export const create: RequestHandler = async (req, res) => {
