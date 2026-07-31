@@ -301,9 +301,15 @@ const REQUEST_PLAN: readonly RequestPlan[] = [
   { daysAgo: 51, status: "COMPLETED", section: "MECHANICAL" },
   { daysAgo: 40, status: "COMPLETED", section: "ELECTRICAL" },
   { daysAgo: 29, status: "COMPLETED", section: "MECHANICAL" },
+  // The last four weeks carry real finished work as well, so the dashboard has
+  // shape on the month it opens on rather than only on an earlier one.
+  { daysAgo: 24, status: "COMPLETED", section: "ELECTRICAL" },
   { daysAgo: 18, status: "AWAITING_APPROVAL", section: "ELECTRICAL" },
+  { daysAgo: 15, status: "COMPLETED", section: "MECHANICAL" },
   { daysAgo: 11, status: "IN_PROGRESS", section: "MECHANICAL" },
+  { daysAgo: 9, status: "COMPLETED", section: "ELECTRICAL" },
   { daysAgo: 7, status: "IN_PROGRESS", section: "ELECTRICAL" },
+  { daysAgo: 5, status: "COMPLETED", section: "MECHANICAL" },
   { daysAgo: 4, status: "SCHEDULED", section: "MECHANICAL" },
   { daysAgo: 2, status: "SUBMITTED", section: "ELECTRICAL" },
   { daysAgo: 1, status: "SUBMITTED", section: "MECHANICAL" },
@@ -346,6 +352,38 @@ const DIAGNOSIS_NOTES: readonly string[] = [
 // ---------------------------------------------------------------------------
 // Seed
 // ---------------------------------------------------------------------------
+
+/**
+ * Seeding empties every table first, so pointing it at the wrong database
+ * destroys the live demo. Local development and production have shared one
+ * database on this project, which makes that a one keystroke mistake.
+ *
+ * A database on this machine is seeded without ceremony. Anything else has to
+ * be asked for by name, with SEED_REMOTE=yes.
+ */
+function assertSafeToSeed(): void {
+  const url = process.env.DATABASE_URL;
+
+  if (!url) {
+    throw new Error("DATABASE_URL is not set, so there is nothing to seed.");
+  }
+
+  const host = new URL(url).hostname;
+  const isLocal = host === "localhost" || host === "127.0.0.1" || host === "::1";
+
+  if (isLocal || process.env.SEED_REMOTE === "yes") {
+    console.error(`Seeding ${host}`);
+    return;
+  }
+
+  throw new Error(
+    [
+      `Refusing to seed ${host}, which is not a database on this machine.`,
+      "Seeding deletes every row first, so this would wipe whatever is there.",
+      "If that is genuinely what you want, run it again with SEED_REMOTE=yes.",
+    ].join("\n"),
+  );
+}
 
 async function clearDatabase(): Promise<void> {
   // Deleted in dependency order so nothing trips a foreign key.
@@ -454,6 +492,8 @@ const VEHICLES: readonly VehicleSeed[] = [
 ];
 
 async function main(): Promise<void> {
+  assertSafeToSeed();
+
   console.error("Clearing existing data");
   await clearDatabase();
 
@@ -535,6 +575,13 @@ async function main(): Promise<void> {
       }),
     ),
   );
+
+  /**
+   * What is left on the shelf as the seed works through the jobs. The inventory
+   * rows above are a snapshot taken before any of it is consumed, so the loop
+   * cannot read stock levels back off them.
+   */
+  const remainingStock = new Map(inventory.map((item) => [item.id, item.quantityInStock]));
 
   console.error("Creating service requests");
   let paymentCounter = 0;
@@ -676,7 +723,19 @@ async function main(): Promise<void> {
       }
       usedPartIds.add(part.id);
 
-      const quantity = 1 + Math.floor(random() * 2);
+      /*
+        Only consume what is actually on the shelf. This used to decrement
+        blindly, which drove the smaller lines below zero and left the
+        management dashboard advertising minus one radiator hose. The API
+        refuses to do this, so neither should the seed.
+      */
+      const remaining = remainingStock.get(part.id) ?? 0;
+      const quantity = Math.min(1 + Math.floor(random() * 2), remaining);
+      if (quantity <= 0) {
+        continue;
+      }
+      remainingStock.set(part.id, remaining - quantity);
+
       const unitCostPesewas = Math.round(Number(part.unitCost) * 100);
       jobTotalPesewas += quantity * unitCostPesewas;
 
@@ -718,8 +777,10 @@ async function main(): Promise<void> {
       },
     });
 
-    // Roughly half of finished jobs come back with a rating.
-    if (random() > 0.45) {
+    // Most finished jobs come back with a rating. Enough of them that the
+    // average rating on the dashboard is a real figure in any recent month,
+    // rather than the "No ratings" a thin sample kept producing.
+    if (random() > 0.2) {
       await prisma.feedback.create({
         data: {
           serviceRequestId: serviceRequest.id,

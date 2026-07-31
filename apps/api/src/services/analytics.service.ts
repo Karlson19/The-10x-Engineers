@@ -32,6 +32,12 @@ type MonthlyTotalRow = { month: string; total: Prisma.Decimal | null };
  * Revenue is money actually taken, so it comes from successful payments.
  * Expenses are the parts consumed, valued at what they cost the workshop.
  * Labour is staff time rather than a cash outlay, so it is not counted here.
+ *
+ * Both sides are counted against finished work. Parts used to be counted the
+ * moment they left the shelf, which put the cost of every open job against a
+ * month that had not been paid for it yet, and made a profitable month read as
+ * a loss. A job pays for itself when it is handed back, so that is when both
+ * its revenue and its parts land.
  */
 async function revenueByMonth(from: Date, to: Date): Promise<MonthlyPoint[]> {
   const [revenueRows, expenseRows] = await Promise.all([
@@ -43,10 +49,13 @@ async function revenueByMonth(from: Date, to: Date): Promise<MonthlyPoint[]> {
       GROUP BY 1
     `,
     prisma.$queryRaw<MonthlyTotalRow[]>`
-      SELECT to_char(date_trunc('month', "createdAt" AT TIME ZONE 'UTC'), 'YYYY-MM') AS month,
-             SUM("unitCost" * "quantity") AS total
-      FROM "WorkLogEntry"
-      WHERE "lineType" = 'PART' AND "createdAt" >= ${from} AND "createdAt" < ${to}
+      SELECT to_char(date_trunc('month', j."completedAt" AT TIME ZONE 'UTC'), 'YYYY-MM') AS month,
+             SUM(w."unitCost" * w."quantity") AS total
+      FROM "WorkLogEntry" w
+      JOIN "Job" j ON j."id" = w."jobId"
+      WHERE w."lineType" = 'PART'
+        AND j."completedAt" IS NOT NULL
+        AND j."completedAt" >= ${from} AND j."completedAt" < ${to}
       GROUP BY 1
     `,
   ]);
@@ -98,10 +107,15 @@ export async function getAnalyticsSummary(period: string | undefined): Promise<A
       where: { status: "SUCCESS", ...inPeriod },
       _sum: { amount: true },
     }),
+    // Parts on work finished in the period, so this sits against the revenue
+    // for the same work rather than against jobs nobody has paid for yet.
     prisma.$queryRaw<Array<{ total: Prisma.Decimal | null }>>`
-      SELECT SUM("unitCost" * "quantity") AS total
-      FROM "WorkLogEntry"
-      WHERE "lineType" = 'PART' AND "createdAt" >= ${start} AND "createdAt" < ${end}
+      SELECT SUM(w."unitCost" * w."quantity") AS total
+      FROM "WorkLogEntry" w
+      JOIN "Job" j ON j."id" = w."jobId"
+      WHERE w."lineType" = 'PART'
+        AND j."completedAt" IS NOT NULL
+        AND j."completedAt" >= ${start} AND j."completedAt" < ${end}
     `,
     prisma.feedback.aggregate({ where: inPeriod, _avg: { rating: true } }),
     prisma.inventoryItem.findMany({ orderBy: [{ section: "asc" }, { name: "asc" }] }),
