@@ -1,12 +1,14 @@
 "use client";
 
-import { Boxes, ChartColumn, ClipboardList } from "lucide-react";
+import { Boxes, ChartColumn, ClipboardList, Tags, Users } from "lucide-react";
 import { SectionDesktopNav, SectionTabBar, type NavItem } from "@/components/shared/section-nav";
 
 const ITEMS: readonly NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: ChartColumn },
   { href: "/admin/requests", label: "Requests", icon: ClipboardList },
+  { href: "/admin/staff", label: "Staff", icon: Users },
   { href: "/admin/inventory", label: "Inventory", icon: Boxes },
+  { href: "/admin/catalogue", label: "Prices", icon: Tags },
 ];
 
 export function AdminDesktopNav() {
