@@ -85,7 +85,7 @@ export function ClientHome() {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <span className="font-mono text-sm text-muted-foreground">{active.reference}</span>
                   <Badge tone={statusTone(active.status)} icon={meta.icon}>
-                    {meta.label}
+                    {meta.customerLabel}
                   </Badge>
                 </div>
 
@@ -223,7 +223,7 @@ export function ClientHome() {
         <Link href="/dashboard/book" className={buttonVariants({ variant: "primary" })}>
           Book a service
         </Link>
-        <Link href="/dashboard/account" className={buttonVariants({ variant: "outline" })}>
+        <Link href="/account" className={buttonVariants({ variant: "outline" })}>
           Account settings
         </Link>
       </div>

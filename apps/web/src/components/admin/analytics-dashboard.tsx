@@ -250,7 +250,7 @@ export function AnalyticsDashboard() {
                 </h2>
                 <Link
                   href="/admin/inventory"
-                  className="text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+                  className="inline-flex min-h-11 items-center text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
                 >
                   Open the stock list
                 </Link>

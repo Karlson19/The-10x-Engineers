@@ -11,13 +11,14 @@ import { useJobs } from "@/hooks/use-jobs";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type StatusFilter = JobStatus | "ALL";
+type StatusFilter = JobStatus | "OPEN" | "ALL";
 
 const STATUS_FILTERS: ReadonlyArray<{ value: StatusFilter; label: string }> = [
-  { value: "ALL", label: "All" },
+  { value: "OPEN", label: "Open" },
   { value: "ASSIGNED", label: "Assigned" },
   { value: "IN_PROGRESS", label: "In progress" },
   { value: "COMPLETED", label: "Completed" },
+  { value: "ALL", label: "All" },
 ];
 
 const WHEN_FILTERS = [
@@ -44,7 +45,9 @@ function QueueSkeleton() {
 }
 
 export function JobQueue() {
-  const [status, setStatus] = useState<StatusFilter>("ALL");
+  // Opens on the work still to do. Finished jobs are a deliberate choice, not
+  // the first thing a technician has to scroll past.
+  const [status, setStatus] = useState<StatusFilter>("OPEN");
   const [when, setWhen] = useState<WhenFilter>("all");
 
   const jobs = useJobs({

@@ -22,7 +22,7 @@ export function RequestCard({ serviceRequest }: { serviceRequest: ServiceRequest
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="font-mono text-sm text-muted-foreground">{serviceRequest.reference}</span>
           <Badge tone={statusTone(serviceRequest.status)} icon={meta.icon}>
-            {meta.label}
+            {meta.customerLabel}
           </Badge>
         </div>
 

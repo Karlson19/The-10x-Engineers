@@ -119,7 +119,12 @@ export const createWorkLogEntrySchema = z
 export type CreateWorkLogEntry = z.infer<typeof createWorkLogEntrySchema>;
 
 export const jobListQuerySchema = paginationQuerySchema.extend({
-  status: jobStatusSchema.optional(),
+  /**
+   * A single status, or "OPEN" for everything still on the floor. The queue
+   * opens on OPEN, because a technician wants the work in front of them, not a
+   * list led by jobs they finished months ago.
+   */
+  status: z.union([jobStatusSchema, z.literal("OPEN")]).optional(),
   section: sectionSchema.optional(),
   assignedStaffId: z.uuid().optional(),
   /** Today's queue, which is what a technician opens the app for. */

@@ -13,10 +13,21 @@ import { useReducedMotion } from "motion/react";
 import type { MonthlyPoint } from "@chrysmec/shared";
 import { formatCurrency } from "@/lib/format";
 
-function monthLabel(month: string): string {
+function monthDate(month: string): Date {
   const [year, monthPart] = month.split("-");
-  const date = new Date(Number(year), Number(monthPart) - 1, 1);
-  return new Intl.DateTimeFormat("en-GB", { month: "short" }).format(date);
+  return new Date(Number(year), Number(monthPart) - 1, 1);
+}
+
+/** "Feb", for a chart axis where the year is already in the caption. */
+function monthLabel(month: string): string {
+  return new Intl.DateTimeFormat("en-GB", { month: "short" }).format(monthDate(month));
+}
+
+/** "Feb 2026", for the table underneath, which is read on its own. */
+function monthAndYear(month: string): string {
+  return new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric" }).format(
+    monthDate(month),
+  );
 }
 
 type ChartPoint = { month: string; label: string; revenue: number; expenses: number };
@@ -135,7 +146,7 @@ export function RevenueChart({ data }: { data: readonly MonthlyPoint[] }) {
         <tbody>
           {points.map((point) => (
             <tr key={point.month}>
-              <th scope="row">{point.month}</th>
+              <th scope="row">{monthAndYear(point.month)}</th>
               <td>{formatCurrency(point.revenue)}</td>
               <td>{formatCurrency(point.expenses)}</td>
             </tr>

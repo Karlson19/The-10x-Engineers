@@ -79,6 +79,20 @@ export function JobDetail({ jobId }: { jobId: string }) {
       ? describeSymptomAnswers(category, serviceRequest.data.symptomDetails)
       : [];
 
+  async function saveDiagnosis(): Promise<void> {
+    setActionError(null);
+
+    try {
+      await updateJob.mutateAsync({ diagnosisNotes: diagnosis });
+    } catch (error) {
+      setActionError(
+        error instanceof ApiError
+          ? error.message
+          : "Could not save your notes. Check your connection and try again.",
+      );
+    }
+  }
+
   async function moveRequest(to: RequestStatus, estimatedCost?: string): Promise<void> {
     setActionError(null);
     try {
@@ -191,7 +205,7 @@ export function JobDetail({ jobId }: { jobId: string }) {
             <Button
               variant="outline"
               className="mt-3"
-              onClick={() => void updateJob.mutateAsync({ diagnosisNotes: diagnosis })}
+              onClick={() => void saveDiagnosis()}
               isPending={updateJob.isPending}
               pendingLabel="Saving"
             >

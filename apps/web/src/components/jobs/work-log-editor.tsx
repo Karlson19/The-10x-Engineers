@@ -6,6 +6,7 @@ import { Plus, Trash2, TriangleAlert } from "lucide-react";
 import type { LineType, Section } from "@chrysmec/shared";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -46,6 +47,9 @@ export function WorkLogEditor({
   const [unitCost, setUnitCost] = useState(DEFAULT_LABOUR_RATE);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<{ id: string; description: string } | null>(
+    null,
+  );
 
   const items = inventory.data?.data ?? [];
   const selectedItem = items.find((item) => item.id === inventoryItemId);
@@ -89,6 +93,27 @@ export function WorkLogEditor({
         error instanceof ApiError
           ? error.message
           : "Could not add that line. Check your connection and try again.",
+      );
+    }
+  }
+
+  /** Removing a part line puts the stock back, so a mis-tap is worth catching. */
+  async function handleRemove(): Promise<void> {
+    if (!pendingRemoval) {
+      return;
+    }
+
+    setFormError(null);
+
+    try {
+      await removeEntry.mutateAsync(pendingRemoval.id);
+      setPendingRemoval(null);
+    } catch (error) {
+      setPendingRemoval(null);
+      setFormError(
+        error instanceof ApiError
+          ? error.message
+          : "Could not remove that line. Check your connection and try again.",
       );
     }
   }
@@ -163,7 +188,9 @@ export function WorkLogEditor({
                   <button
                     type="button"
                     aria-label={`Remove ${entry.description}`}
-                    onClick={() => void removeEntry.mutateAsync(entry.id)}
+                    onClick={() =>
+                      setPendingRemoval({ id: entry.id, description: entry.description })
+                    }
                     className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
                   >
                     <Trash2 aria-hidden size={18} />
@@ -302,6 +329,21 @@ export function WorkLogEditor({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        onClose={() => setPendingRemoval(null)}
+        onConfirm={() => void handleRemove()}
+        title="Remove this line?"
+        description={
+          pendingRemoval
+            ? `"${pendingRemoval.description}" comes off the job, and any stock it used goes back on the shelf.`
+            : ""
+        }
+        confirmLabel="Remove it"
+        isPending={removeEntry.isPending}
+        pendingLabel="Removing"
+      />
     </div>
   );
 }

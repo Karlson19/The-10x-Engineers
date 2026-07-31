@@ -39,7 +39,10 @@ function scopeFor(user: AuthenticatedUser, query?: JobListQuery): Prisma.JobWher
     where.assignedStaffId = query.assignedStaffId;
   }
 
-  if (query?.status) {
+  if (query?.status === "OPEN") {
+    // Everything still on the workshop floor.
+    where.status = { in: ["ASSIGNED", "IN_PROGRESS"] };
+  } else if (query?.status) {
     where.status = query.status;
   }
 

@@ -178,7 +178,7 @@ export function StatusTimeline({
                     step.state === "future" ? "text-muted-foreground" : "text-foreground",
                   )}
                 >
-                  {meta.label}
+                  {meta.customerLabel}
                 </h3>
                 {step.at ? (
                   <time dateTime={step.at} className="font-mono text-xs text-muted-foreground">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
-import { REQUEST_STATUSES, REQUEST_STATUS_LABELS, type RequestStatus } from "@chrysmec/shared";
+import { CUSTOMER_STATUS_LABELS, REQUEST_STATUSES, type RequestStatus } from "@chrysmec/shared";
 import { AnimatePresence } from "motion/react";
 import { RequestCard } from "@/components/requests/request-card";
 import { PendingBookingCard } from "@/components/requests/pending-booking-card";
@@ -20,7 +20,7 @@ type Filter = RequestStatus | "ALL";
 const FILTERS: readonly Filter[] = ["ALL", ...REQUEST_STATUSES];
 
 function label(filter: Filter): string {
-  return filter === "ALL" ? "All" : REQUEST_STATUS_LABELS[filter];
+  return filter === "ALL" ? "All" : CUSTOMER_STATUS_LABELS[filter];
 }
 
 export function RequestList() {
