@@ -164,6 +164,9 @@ model InventoryItem {
   quantityInStock Int     @default(0)
   unitCost        Decimal @db.Decimal(10, 2)
   reorderLevel    Int     @default(5)
+  /// A photograph of the part. Either one shipped with the app under /parts, or
+  /// a link to the workshop's own photo of what is actually on the shelf.
+  imageUrl        String?
 
   workLogEntries WorkLogEntry[]
 }

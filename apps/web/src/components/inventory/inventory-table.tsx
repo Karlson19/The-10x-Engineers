@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Boxes, TriangleAlert } from "lucide-react";
 import type { InventoryItem } from "@chrysmec/shared";
+import { PartIcon } from "@/components/inventory/part-icon";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
@@ -55,12 +56,32 @@ function StockRow({ item, action }: { item: InventoryItem; action?: React.ReactN
     <div
       className={cn(
         "grid gap-x-6 gap-y-2 border-b border-border py-4",
-        "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto_auto_auto] md:items-center",
+        "md:grid-cols-[minmax(0,3fr)_minmax(0,1fr)_auto_auto_auto] md:items-center",
       )}
     >
-      <div className="min-w-0">
-        <p className="truncate text-base text-foreground">{item.name}</p>
-        <p className="mt-0.5 font-mono text-xs text-muted-foreground">{item.sku}</p>
+      <div className="flex min-w-0 items-center gap-3">
+        {/* The workshop's photograph when there is one, and a drawn diagram
+            when there is not, so no row is ever a blank square. */}
+        <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/60 text-muted-foreground">
+          {item.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.imageUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
+          ) : (
+            <PartIcon name={item.name} sku={item.sku} className="size-6" />
+          )}
+        </span>
+        <div className="min-w-0">
+          {/* Wraps rather than truncating: a part is identified by its full
+              name, and "Coolant concentrate, ..." identifies nothing. */}
+          <p className="text-base text-balance text-foreground">{item.name}</p>
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">{item.sku}</p>
+        </div>
       </div>
 
       <p className="font-mono text-sm text-muted-foreground md:text-left">
@@ -101,11 +122,14 @@ export function InventoryTable({
   section,
   title,
   standfirst,
+  headerAction,
   renderAction,
 }: {
   section?: InventoryItem["section"];
   title: string;
   standfirst: string;
+  /** Management adds a part from here. Absent on the technician's read only view. */
+  headerAction?: React.ReactNode;
   renderAction?: (item: InventoryItem) => React.ReactNode;
 }) {
   const [lowStockOnly, setLowStockOnly] = useState(false);
@@ -113,9 +137,14 @@ export function InventoryTable({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-      <p className="eyebrow">Stock</p>
-      <h1 className="mt-4 font-display text-4xl font-semibold text-foreground">{title}</h1>
-      <p className="mt-4 max-w-xl text-lg text-muted-foreground">{standfirst}</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Stock</p>
+          <h1 className="mt-4 font-display text-4xl font-semibold text-foreground">{title}</h1>
+          <p className="mt-4 max-w-xl text-lg text-muted-foreground">{standfirst}</p>
+        </div>
+        {headerAction}
+      </div>
 
       <div className="mt-8 flex flex-wrap gap-2">
         {[

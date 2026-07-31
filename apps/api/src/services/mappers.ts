@@ -70,6 +70,7 @@ export function toInventoryItem(item: InventoryItem): InventoryItemDto {
     quantityInStock: item.quantityInStock,
     unitCost: money(item.unitCost),
     reorderLevel: item.reorderLevel,
+    imageUrl: item.imageUrl,
     // Derived here so no screen has to remember the rule for itself.
     isLowStock: item.quantityInStock <= item.reorderLevel,
   };

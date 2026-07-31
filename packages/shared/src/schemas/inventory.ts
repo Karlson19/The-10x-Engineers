@@ -10,10 +10,26 @@ export const inventoryItemSchema = z.object({
   quantityInStock: z.number().int(),
   unitCost: moneySchema,
   reorderLevel: z.number().int(),
+  /** A photograph of the part, if the workshop has one. */
+  imageUrl: z.string().nullable(),
   /** Derived, so the client never has to work out the rule for itself. */
   isLowStock: z.boolean(),
 });
 export type InventoryItem = z.infer<typeof inventoryItemSchema>;
+
+/**
+ * Either a path to an image shipped with the app, or a link to the workshop's
+ * own photograph. Anything else is refused rather than rendered, so a bad value
+ * cannot point the page at something unexpected.
+ */
+export const imageUrlSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (value) => value.startsWith("/") || value.startsWith("https://"),
+    "Use a link starting with https, or a path starting with a slash.",
+  );
 
 export const skuSchema = z
   .string()
@@ -36,6 +52,7 @@ export const createInventoryItemSchema = z.object({
   quantityInStock: z.number().int().min(0, "Stock cannot be negative.").max(1_000_000),
   unitCost: priceInputSchema,
   reorderLevel: z.number().int().min(0).max(10_000),
+  imageUrl: imageUrlSchema.nullable().optional(),
 });
 export type CreateInventoryItem = z.infer<typeof createInventoryItemSchema>;
 

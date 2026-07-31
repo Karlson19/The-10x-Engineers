@@ -334,6 +334,19 @@ const STATUS_NOTES: Readonly<Record<RequestStatus, string>> = {
   CANCELLED: "Cancelled at the customer's request.",
 };
 
+/**
+ * Photographs shipped with the app, under apps/web/public/parts.
+ *
+ * Only the parts that have one are listed. Everything else falls back to the
+ * drawn diagram, and management can point any part at its own photograph from
+ * the inventory screen.
+ */
+const PART_IMAGES: Readonly<Record<string, string>> = {
+  "MEC-OIL-5W30": "/parts/engine-oil.webp",
+  "MEC-BRK-PADF": "/parts/brake-pads.webp",
+  "MEC-BRK-PADR": "/parts/brake-pads.webp",
+};
+
 const LOCATIONS: readonly string[] = [
   "Chrysmec workshop, Kumasi",
   "Chrysmec workshop, Kumasi",
@@ -571,6 +584,7 @@ async function main(): Promise<void> {
           quantityInStock: item.quantityInStock,
           unitCost: money(item.unitCostPesewas),
           reorderLevel: item.reorderLevel,
+          imageUrl: PART_IMAGES[item.sku] ?? null,
         },
       }),
     ),
