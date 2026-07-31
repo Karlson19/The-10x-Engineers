@@ -2,19 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { Car, CirclePlus, Pencil, Trash2 } from "lucide-react";
 import type { Vehicle } from "@chrysmec/shared";
 import { VehicleForm } from "@/components/vehicles/vehicle-form";
+import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useDeleteVehicle, useVehicles } from "@/hooks/use-vehicles";
 import { ApiError } from "@/lib/api/client";
+import { motionTokens } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 export function VehicleManager() {
   const vehicles = useVehicles();
   const deleteMutation = useDeleteVehicle();
+  const prefersReducedMotion = useReducedMotion();
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -91,12 +96,27 @@ export function VehicleManager() {
             }
           />
         ) : (
-          <ul>
-            {vehicles.data.data.map((vehicle) => (
-              <li key={vehicle.id} className="border-b border-border py-5">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {vehicles.data.data.map((vehicle, index) => (
+              <motion.li
+                key={vehicle.id}
+                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: motionTokens.base,
+                  ease: motionTokens.easeOut,
+                  delay: prefersReducedMotion ? 0 : Math.min(index, 6) * 0.04,
+                }}
+                className={cn(
+                  "overflow-hidden rounded-xl border border-border bg-card",
+                  "transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-foreground/25",
+                  "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+                  editingId === vehicle.id && "sm:col-span-2 lg:col-span-3",
+                )}
+              >
                 {editingId === vehicle.id ? (
-                  <div>
-                    <h2 className="mb-5 font-display text-xl font-semibold text-foreground">
+                  <div className="p-5 sm:p-6">
+                    <h2 className="mb-5 font-display text-xl font-semibold text-card-foreground">
                       Edit {vehicle.make} {vehicle.model}
                     </h2>
                     <VehicleForm
@@ -106,54 +126,67 @@ export function VehicleManager() {
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h2 className="font-display text-xl font-semibold text-foreground">
+                  <div className="flex h-full flex-col">
+                    {/* The car sits on its own tinted shelf so the turntable has
+                        somewhere to stand and never crowds the name. */}
+                    <div className="flex justify-center border-b border-border bg-muted/50 px-5 pt-5 pb-2">
+                      <VehicleSilhouette
+                        make={vehicle.make}
+                        model={vehicle.model}
+                        className="w-full max-w-56"
+                      />
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-5">
+                      <h2 className="font-display text-xl font-semibold text-balance text-card-foreground">
                         {vehicle.make} {vehicle.model}
                       </h2>
                       <p className="mt-1 font-mono text-sm text-muted-foreground">
                         {vehicle.registrationNo} | {vehicle.year}
                       </p>
                       {vehicle.notes ? (
-                        <p className="mt-2 max-w-prose text-base text-muted-foreground">
-                          {vehicle.notes}
-                        </p>
+                        <p className="mt-2 text-base text-muted-foreground">{vehicle.notes}</p>
                       ) : null}
+
                       <p className="mt-3 text-sm text-muted-foreground">
                         {vehicle.serviceRequestCount === 0 ? (
                           "No service history yet"
                         ) : (
                           <Link
                             href={`/dashboard/requests?vehicle=${vehicle.id}`}
-                            className="text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                            className="inline-flex min-h-11 items-center text-foreground underline decoration-accent decoration-2 underline-offset-4"
                           >
                             {vehicle.serviceRequestCount} service
                             {vehicle.serviceRequestCount === 1 ? "" : "s"} on record
                           </Link>
                         )}
                       </p>
-                    </div>
 
-                    <div className="flex shrink-0 gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setEditingId(vehicle.id)}>
-                        <Pencil aria-hidden size={16} />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void handleDelete(vehicle)}
-                        isPending={pendingDeleteId === vehicle.id}
-                        pendingLabel="Removing"
-                        aria-label={`Remove ${vehicle.make} ${vehicle.model}`}
-                      >
-                        <Trash2 aria-hidden size={16} />
-                        Remove
-                      </Button>
+                      <div className="mt-auto flex gap-2 pt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingId(vehicle.id)}
+                        >
+                          <Pencil aria-hidden size={16} />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleDelete(vehicle)}
+                          isPending={pendingDeleteId === vehicle.id}
+                          pendingLabel="Removing"
+                          aria-label={`Remove ${vehicle.make} ${vehicle.model}`}
+                        >
+                          <Trash2 aria-hidden size={16} />
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
-              </li>
+              </motion.li>
             ))}
           </ul>
         )}

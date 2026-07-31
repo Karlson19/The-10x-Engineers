@@ -515,6 +515,103 @@
     }
   }
 
+  /* -------------------------------------------------------------------------
+     The vehicle turntable. A drawn car on a slow showroom rotation.
+
+     Written in CSS rather than with an animation library, and with transform
+     and opacity only, because this sits on a list that can hold several cars
+     at once on a mid-range phone.
+  ------------------------------------------------------------------------- */
+
+  .car-stage {
+    perspective: 900px;
+    perspective-origin: 50% 60%;
+  }
+
+  /*
+    Swings to a little either side of straight on and eases at each end, the
+    way a real turntable settles. It never goes near edge on, where a drawn
+    side profile would fall apart.
+  */
+  .car-turn {
+    transform-style: preserve-3d;
+    animation: car-turn 9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  }
+
+  @keyframes car-turn {
+    from {
+      transform: rotateY(-15deg) translateZ(0);
+    }
+    to {
+      transform: rotateY(15deg) translateZ(0);
+    }
+  }
+
+  /* The shadow tightens as the car comes square on, which sells the depth. */
+  .car-shadow {
+    transform-box: view-box;
+    transform-origin: 50% 87%;
+    animation: car-shadow 9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  }
+
+  @keyframes car-shadow {
+    from {
+      transform: scaleX(0.88);
+      opacity: 0.55;
+    }
+    to {
+      transform: scaleX(1.06);
+      opacity: 1;
+    }
+  }
+
+  .car-wheel {
+    transform-box: view-box;
+    animation: car-wheel 2.4s linear infinite;
+  }
+
+  @keyframes car-wheel {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* A highlight travelling the flank, so the paint reads as paint. */
+  .car-glint {
+    stroke-dasharray: 46 220;
+    animation: car-glint 9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  }
+
+  @keyframes car-glint {
+    from {
+      stroke-dashoffset: 190;
+      opacity: 0.25;
+    }
+    to {
+      stroke-dashoffset: -40;
+      opacity: 0.75;
+    }
+  }
+
+  /* Reduced motion gets the finished pose: square on, parked, still a car. */
+  @media (prefers-reduced-motion: reduce) {
+    .car-turn,
+    .car-shadow,
+    .car-wheel,
+    .car-glint {
+      animation: none;
+    }
+
+    .car-turn {
+      transform: none;
+    }
+
+    .car-glint {
+      stroke-dasharray: none;
+      opacity: 0.5;
+    }
+  }
+
   /* Skeleton shimmer. Transform only, so it stays cheap on a mid-range phone. */
   @keyframes shimmer {
     to {
