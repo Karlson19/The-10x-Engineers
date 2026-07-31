@@ -14,7 +14,43 @@ import { cn } from "@/lib/utils";
  * Stacked cards on a phone, a table on a wide screen. Never a horizontal
  * scroll, because these are read standing at a parts shelf.
  */
+/**
+ * How full the shelf is, as a bar. A row of numbers all reads the same at a
+ * glance; a bar that is nearly empty does not, which is the whole point of a
+ * stock list somebody scans while standing at the shelf.
+ *
+ * The scale is three times the reorder level, so the mark where reordering
+ * starts sits a third of the way along on every line and they can be compared
+ * against each other.
+ */
+function StockBar({ item }: { item: InventoryItem }) {
+  const ceiling = Math.max(item.reorderLevel * 3, item.quantityInStock, 1);
+  const filled = Math.min(item.quantityInStock / ceiling, 1);
+  const reorderAt = Math.min(item.reorderLevel / ceiling, 1);
+  const isOut = item.quantityInStock <= 0;
+
+  return (
+    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted md:w-28">
+      <div
+        className={cn(
+          "h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none",
+          isOut ? "bg-destructive" : item.isLowStock ? "bg-warning" : "bg-primary",
+        )}
+        style={{ width: `${Math.max(filled * 100, isOut ? 0 : 3)}%` }}
+      />
+      {/* Where reordering starts, so the bar can be read without the number. */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 w-px bg-foreground/30"
+        style={{ left: `${reorderAt * 100}%` }}
+      />
+    </div>
+  );
+}
+
 function StockRow({ item, action }: { item: InventoryItem; action?: React.ReactNode }) {
+  const isOut = item.quantityInStock <= 0;
+
   return (
     <div
       className={cn(
@@ -31,15 +67,23 @@ function StockRow({ item, action }: { item: InventoryItem; action?: React.ReactN
         {formatCurrency(item.unitCost)}
       </p>
 
-      <p className="font-mono text-base text-foreground md:text-right">
-        <span className="text-muted-foreground md:hidden">In stock: </span>
-        {item.quantityInStock}
-      </p>
+      <div className="md:w-32 md:text-right">
+        <p
+          className={cn(
+            "font-mono text-base",
+            isOut ? "font-medium text-destructive" : "text-foreground",
+          )}
+        >
+          <span className="text-muted-foreground md:hidden">In stock: </span>
+          {isOut ? "None left" : item.quantityInStock}
+        </p>
+        <StockBar item={item} />
+      </div>
 
       <div className="md:w-36 md:text-right">
         {item.isLowStock ? (
           <Badge tone="stopped" icon={TriangleAlert}>
-            Reorder
+            {isOut ? "Out of stock" : "Reorder"}
           </Badge>
         ) : (
           <span className="font-mono text-xs text-muted-foreground">

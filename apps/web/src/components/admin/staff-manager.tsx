@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { UserPlus, Users } from "lucide-react";
 import {
   type CreateUserRequest,
@@ -23,6 +24,8 @@ import { useToast } from "@/components/ui/toast";
 import { useJobs } from "@/hooks/use-jobs";
 import { useCreateUser, useDeactivateUser, useUpdateUser, useUsers } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api/client";
+import { motionTokens } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 type Draft = {
   fullName: string;
@@ -57,6 +60,7 @@ export function StaffManager() {
   const updateUser = useUpdateUser();
   const deactivateUser = useDeactivateUser();
   const { showToast } = useToast();
+  const prefersReducedMotion = useReducedMotion();
 
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -197,38 +201,79 @@ export function StaffManager() {
             }
           />
         ) : (
-          <ul>
-            {staff.data.data.map((person) => {
+          <ul className="grid gap-4 lg:grid-cols-2">
+            {staff.data.data.map((person, index) => {
               const workload = workloadFor(person.id);
+              const initials = person.fullName
+                .split(" ")
+                .map((part) => part[0])
+                .slice(0, 2)
+                .join("");
 
               return (
-                <li
+                <motion.li
                   key={person.id}
-                  className="flex flex-col gap-4 border-b border-border py-5 sm:flex-row sm:items-center sm:justify-between"
+                  initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: motionTokens.base,
+                    ease: motionTokens.easeOut,
+                    delay: prefersReducedMotion ? 0 : Math.min(index, 8) * 0.04,
+                  }}
+                  className={cn(
+                    "rounded-xl border border-border bg-card p-5",
+                    !person.isActive && "opacity-70",
+                  )}
                 >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <p className="text-lg font-medium text-foreground">{person.fullName}</p>
-                      {person.isActive ? null : <Badge tone="stopped">Stood down</Badge>}
+                  <div className="flex items-start gap-4">
+                    <span
+                      aria-hidden
+                      className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary font-display text-lg font-semibold text-primary-foreground"
+                    >
+                      {initials}
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <p className="text-lg font-medium text-card-foreground">
+                          {person.fullName}
+                        </p>
+                        {person.isActive ? null : <Badge tone="stopped">Stood down</Badge>}
+                      </div>
+                      <p className="mt-1 truncate font-mono text-sm text-muted-foreground">
+                        {person.email}
+                      </p>
+                      <a
+                        href={`tel:${person.phone}`}
+                        className="mt-0.5 inline-flex min-h-11 items-center font-mono text-sm text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                      >
+                        {person.phone}
+                      </a>
                     </div>
-                    <p className="mt-1 font-mono text-sm text-muted-foreground">
-                      {person.email} | {person.phone}
-                    </p>
-                    <p className="mt-1 text-base text-muted-foreground">
-                      {openJobs.isPending
-                        ? "Counting open jobs"
-                        : workload === 0
-                          ? "Nothing open right now"
-                          : `${workload} open ${workload === 1 ? "job" : "jobs"}`}
-                    </p>
                   </div>
 
-                  <div className="flex shrink-0 flex-wrap items-center gap-3">
+                  {/* Workload as a figure rather than a sentence, so two
+                      technicians can be compared at a glance. */}
+                  <div className="mt-4 flex items-baseline gap-3 border-t border-border pt-4">
+                    <span className="font-display text-3xl font-semibold text-card-foreground tabular-nums">
+                      {openJobs.isPending ? "—" : workload}
+                    </span>
+                    <span className="text-base text-muted-foreground">
+                      {openJobs.isPending
+                        ? "counting open jobs"
+                        : workload === 1
+                          ? "job open right now"
+                          : "jobs open right now"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
                     <label className="sr-only" htmlFor={`section-${person.id}`}>
                       Section for {person.fullName}
                     </label>
                     <Select
                       id={`section-${person.id}`}
+                      className="flex-1"
                       value={person.section ?? "MECHANICAL"}
                       disabled={!person.isActive || updateUser.isPending}
                       onChange={(event) => void handleMove(person, event.target.value as Section)}
@@ -246,7 +291,7 @@ export function StaffManager() {
                       </Button>
                     ) : null}
                   </div>
-                </li>
+                </motion.li>
               );
             })}
           </ul>

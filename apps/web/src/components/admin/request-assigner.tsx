@@ -48,7 +48,10 @@ export function RequestAssigner({ serviceRequest }: { serviceRequest: ServiceReq
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <FormField
           id={`assign-${serviceRequest.id}`}
-          label={`Assign a ${SECTION_LABELS[serviceRequest.section].toLowerCase()} technician`}
+          // "an electrical technician", not "a electrical technician".
+          label={`Assign ${serviceRequest.section === "ELECTRICAL" ? "an" : "a"} ${SECTION_LABELS[
+            serviceRequest.section
+          ].toLowerCase()} technician`}
           className="sm:w-64"
         >
           {(field) => (

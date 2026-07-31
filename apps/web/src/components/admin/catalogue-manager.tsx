@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { Pencil, Plus, Tags } from "lucide-react";
 import {
   SECTION_LABELS,
@@ -27,6 +28,8 @@ import {
 } from "@/hooks/use-catalogue";
 import { ApiError } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/format";
+import { motionTokens } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 type Draft = {
   name: string;
@@ -54,6 +57,7 @@ export function CatalogueManager() {
   const updateItem = useUpdateCatalogueItem();
   const retireItem = useRetireCatalogueItem();
   const { showToast } = useToast();
+  const prefersReducedMotion = useReducedMotion();
 
   const [editing, setEditing] = useState<ServiceCatalogItem | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -200,40 +204,80 @@ export function CatalogueManager() {
             }
           />
         ) : (
-          <ul>
-            {catalogue.data.data.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-col gap-4 border-b border-border py-5 sm:flex-row sm:items-start sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <p className="text-lg font-medium text-foreground">{item.name}</p>
-                    <Badge tone="neutral">{SECTION_LABELS[item.section]}</Badge>
-                    {item.isActive ? null : <Badge tone="stopped">Retired</Badge>}
-                  </div>
-                  <p className="mt-1 max-w-2xl text-base text-muted-foreground">
-                    {item.description}
-                  </p>
-                </div>
+          // Grouped by section, because that is how the workshop is organised
+          // and how the booking wizard offers them.
+          <div className="space-y-12">
+            {SECTIONS.map((section) => {
+              const items = catalogue.data.data.filter((item) => item.section === section);
 
-                <div className="flex shrink-0 items-center gap-4">
-                  <span className="font-mono text-base text-foreground">
-                    {formatCurrency(item.basePrice)}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
-                    <Pencil aria-hidden size={16} />
-                    Edit
-                  </Button>
-                  {item.isActive ? (
-                    <Button variant="ghost" size="sm" onClick={() => setPendingRetire(item)}>
-                      Retire
-                    </Button>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
+              if (items.length === 0) {
+                return null;
+              }
+
+              return (
+                <section key={section}>
+                  <div className="flex items-baseline justify-between gap-4 border-b-2 border-foreground/85 pb-3">
+                    <h2 className="font-display text-xl font-semibold text-foreground">
+                      {SECTION_LABELS[section]}
+                    </h2>
+                    <span className="font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">
+                      {items.length} {items.length === 1 ? "service" : "services"}
+                    </span>
+                  </div>
+
+                  <ul>
+                    {items.map((item, index) => (
+                      <motion.li
+                        key={item.id}
+                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: motionTokens.base,
+                          ease: motionTokens.easeOut,
+                          delay: prefersReducedMotion ? 0 : Math.min(index, 8) * 0.03,
+                        }}
+                        className={cn(
+                          "flex flex-col gap-3 border-b border-border py-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6",
+                          !item.isActive && "opacity-65",
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                            <p className="text-lg font-medium text-foreground">{item.name}</p>
+                            {item.isActive ? null : <Badge tone="stopped">Retired</Badge>}
+                          </div>
+                          <p className="mt-1 max-w-2xl text-base text-muted-foreground">
+                            {item.description}
+                          </p>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
+                          <span className="font-mono text-lg text-foreground">
+                            {formatCurrency(item.basePrice)}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>
+                              <Pencil aria-hidden size={16} />
+                              Edit
+                            </Button>
+                            {item.isActive ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setPendingRetire(item)}
+                              >
+                                Retire
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
         )}
       </div>
 

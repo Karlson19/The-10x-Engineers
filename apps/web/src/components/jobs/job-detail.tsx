@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
+import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
 import { useJob, useUpdateJob } from "@/hooks/use-jobs";
 import { useServiceRequest, useUpdateServiceRequestStatus } from "@/hooks/use-service-requests";
 import { ApiError } from "@/lib/api/client";
@@ -124,17 +125,29 @@ export function JobDetail({ jobId }: { jobId: string }) {
         Back to the queue
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-mono text-sm text-muted-foreground">{data.reference}</span>
-        <JobStatusBadge status={data.status} />
-      </div>
+      {/* The vehicle first, because a technician walking up to a car wants to
+          know it is the right one before anything else. */}
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-7">
+        <VehicleSilhouette
+          make={data.vehicle.make}
+          model={data.vehicle.model}
+          className="w-44 self-center sm:w-52 sm:shrink-0"
+        />
 
-      <h1 className="mt-3 font-display text-4xl font-semibold text-foreground">
-        {data.vehicle.make} {data.vehicle.model}
-      </h1>
-      <p className="mt-2 font-mono text-base text-muted-foreground">
-        {data.vehicle.registrationNo} | {data.vehicle.year}
-      </p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="font-mono text-sm text-muted-foreground">{data.reference}</span>
+            <JobStatusBadge status={data.status} />
+          </div>
+
+          <h1 className="mt-3 font-display text-4xl font-semibold text-foreground">
+            {data.vehicle.make} {data.vehicle.model}
+          </h1>
+          <p className="mt-2 font-mono text-base text-muted-foreground">
+            {data.vehicle.registrationNo} | {data.vehicle.year}
+          </p>
+        </div>
+      </div>
 
       {actionError ? (
         <Alert tone="error" title="Could not update" className="mt-6">
