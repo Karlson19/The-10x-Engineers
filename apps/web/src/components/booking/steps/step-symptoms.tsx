@@ -5,10 +5,13 @@ import {
   SECTION_LABELS,
   type Section,
   type SymptomAnswers,
+  assessUrgency,
+  canAssessUrgency,
   getSymptomCategory,
   isQuestionVisible,
   symptomCategoriesForSection,
 } from "@chrysmec/shared";
+import { TriageCallout } from "@/components/booking/triage-callout";
 import { ChoiceGroup } from "@/components/ui/choice-group";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -41,6 +44,13 @@ export function StepSymptoms({
   onChangeAnswers: (answers: SymptomAnswers) => void;
 }) {
   const category = symptomCategory ? getSymptomCategory(symptomCategory) : undefined;
+
+  // Held back until they have said how bad it is, so no verdict flashes at a
+  // half filled form.
+  const triage =
+    symptomCategory && canAssessUrgency(symptomDetails)
+      ? assessUrgency(symptomCategory, symptomDetails)
+      : null;
 
   function setAnswer(questionId: string, value: string | string[]): void {
     onChangeAnswers({ ...symptomDetails, [questionId]: value });
@@ -196,6 +206,8 @@ export function StepSymptoms({
               );
             })
         : null}
+
+      {triage ? <TriageCallout triage={triage} /> : null}
     </div>
   );
 }

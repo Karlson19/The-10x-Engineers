@@ -6,9 +6,12 @@ import {
   type ServiceCatalogItem,
   type SymptomAnswers,
   type Vehicle,
+  assessUrgency,
+  canAssessUrgency,
   describeSymptomAnswers,
   getSymptomCategory,
 } from "@chrysmec/shared";
+import { TriageCallout } from "@/components/booking/triage-callout";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -44,6 +47,10 @@ export function StepReview({
   const category = symptomCategory ? getSymptomCategory(symptomCategory) : undefined;
   const answers = category ? describeSymptomAnswers(category, symptomDetails) : [];
   const total = services.reduce((sum, item) => sum + Number.parseFloat(item.basePrice), 0);
+  const triage =
+    symptomCategory && canAssessUrgency(symptomDetails)
+      ? assessUrgency(symptomCategory, symptomDetails)
+      : null;
 
   return (
     <div>
@@ -51,6 +58,14 @@ export function StepReview({
         Check this over before you send it. You can still change a booking while it is waiting to be
         scheduled.
       </p>
+
+      {/* Repeated here so an urgent reading is the last thing they see before
+          sending, not something they scrolled past two steps ago. */}
+      {triage ? (
+        <div className="mb-7">
+          <TriageCallout triage={triage} />
+        </div>
+      ) : null}
 
       <dl>
         <Row label="Vehicle">

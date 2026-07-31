@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import {
   type CreateServiceRequest,
   type SymptomAnswers,
+  assessUrgency,
+  canAssessUrgency,
   getSymptomCategory,
   validateSymptomAnswers,
 } from "@chrysmec/shared";
@@ -27,6 +29,7 @@ import { enqueueBooking } from "@/lib/offline/outbox";
 import { useVehicles } from "@/hooks/use-vehicles";
 import { ApiError } from "@/lib/api/client";
 import { motionTokens } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 const STEPS = [
   { title: "Vehicle", heading: "Which vehicle?" },
@@ -229,6 +232,18 @@ export function BookingWizard() {
   const progress = (step + 1) / STEPS.length;
   const isLast = step === STEPS.length - 1;
 
+  /*
+    When the intake says stop driving, ringing the workshop is the most
+    important thing on the screen, so the booking button steps down to pine and
+    leaves the red to the phone number. Two red buttons competing would make the
+    warning look like decoration.
+  */
+  const isUrgent =
+    draft.symptomCategory !== null &&
+    canAssessUrgency(draft.symptomDetails) &&
+    assessUrgency(draft.symptomCategory, draft.symptomDetails).level === "urgent";
+  const advanceVariant = isUrgent ? "primary" : "accent";
+
   return (
     <div>
       <div className="mb-8">
@@ -256,6 +271,37 @@ export function BookingWizard() {
             style={{ width: "100%" }}
           />
         </div>
+
+        {/*
+          Steps already passed are reachable in one tap. Changing an answer four
+          steps back used to mean pressing Back four times, which is where
+          people give up and ring instead.
+        */}
+        <ol className="mt-3 flex flex-wrap gap-x-1 gap-y-1">
+          {STEPS.map((entry, index) => {
+            const isDone = index < step;
+            const isCurrent = index === step;
+
+            return (
+              <li key={entry.title}>
+                <button
+                  type="button"
+                  disabled={!isDone}
+                  aria-current={isCurrent ? "step" : undefined}
+                  onClick={() => goTo(index)}
+                  className={cn(
+                    "min-h-9 rounded-md px-2 font-mono text-xs tracking-[0.1em] uppercase transition-colors",
+                    isCurrent && "text-foreground",
+                    isDone && "text-muted-foreground underline decoration-accent decoration-2 underline-offset-4 hover:text-foreground",
+                    !isDone && !isCurrent && "text-muted-foreground/50",
+                  )}
+                >
+                  {entry.title}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
       <h1 className="font-display text-3xl font-semibold text-foreground">{current.heading}</h1>
@@ -309,6 +355,8 @@ export function BookingWizard() {
             {step === 2 ? (
               <StepServices
                 section={draft.section}
+                symptomCategory={draft.symptomCategory}
+                symptomDetails={draft.symptomDetails}
                 selectedIds={draft.serviceCatalogItemIds}
                 onChange={(serviceCatalogItemIds) => update({ serviceCatalogItemIds })}
               />
@@ -361,7 +409,7 @@ export function BookingWizard() {
 
         {isLast ? (
           <Button
-            variant="accent"
+            variant={advanceVariant}
             onClick={() => void handleSubmit()}
             isPending={createMutation.isPending}
             pendingLabel="Sending"
@@ -369,7 +417,7 @@ export function BookingWizard() {
             Send booking
           </Button>
         ) : (
-          <Button variant="accent" onClick={handleNext}>
+          <Button variant={advanceVariant} onClick={handleNext}>
             Continue
             <ArrowRight aria-hidden size={18} />
           </Button>

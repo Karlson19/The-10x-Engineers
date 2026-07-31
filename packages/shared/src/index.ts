@@ -13,3 +13,4 @@ export * from "./schemas/job";
 export * from "./schemas/analytics";
 export * from "./schemas/notification";
 export * from "./schemas/feedback";
+export * from "./triage";
