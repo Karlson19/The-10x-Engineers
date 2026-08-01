@@ -8,9 +8,15 @@ function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Users are on metered mobile data. Do not refetch just because they
-        // switched apps and came back.
-        refetchOnWindowFocus: false,
+        /*
+          Coming back to the app re-checks, but only if the data is older than
+          the stale time below. This used to be off entirely to save mobile
+          data, which meant somebody who switched apps and came back was looking
+          at whatever was true when they left, with no way to know. Thirty
+          seconds is the compromise: flicking between apps costs nothing,
+          returning to a job later gets the current answer.
+        */
+        refetchOnWindowFocus: true,
         staleTime: 30_000,
         retry(failureCount, error) {
           if (error instanceof ApiError && !error.isRetryable) {

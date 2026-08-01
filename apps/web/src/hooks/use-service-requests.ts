@@ -131,7 +131,10 @@ export function useUpdateServiceRequestStatus(id: string) {
       queryClient.setQueryData([...REQUESTS_KEY, "detail", id], updated);
       void queryClient.invalidateQueries({ queryKey: [...REQUESTS_KEY, "timeline", id] });
       void queryClient.invalidateQueries({ queryKey: [...REQUESTS_KEY, "list"] });
+      void queryClient.invalidateQueries({ queryKey: [...REQUESTS_KEY, "invoice", id] });
       void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      // Finishing or cancelling a booking moves the management figures.
+      void queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 }

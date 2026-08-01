@@ -71,6 +71,8 @@ export function useAddWorkLogEntry(jobId: string) {
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "detail", jobId] });
       // A part line changes stock, so the inventory view is stale too.
       void queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      // The customer reads their bill off these same lines.
+      void queryClient.invalidateQueries({ queryKey: ["service-requests", "invoice"] });
     },
   });
 }
@@ -84,6 +86,7 @@ export function useRemoveWorkLogEntry(jobId: string) {
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "worklog", jobId] });
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "detail", jobId] });
       void queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      void queryClient.invalidateQueries({ queryKey: ["service-requests", "invoice"] });
     },
   });
 }
