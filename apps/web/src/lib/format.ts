@@ -42,3 +42,40 @@ export function formatTime(value: string | Date): string {
 export function formatDateTime(value: string | Date): string {
   return `${formatDate(value)}, ${formatTime(value)}`;
 }
+
+/**
+ * "Just now", "20 minutes ago", "3 days ago", and the plain date once it is
+ * far enough back that counting stops being useful.
+ *
+ * Used on notifications, where how long ago something happened matters more
+ * than the exact time it happened.
+ */
+export function formatRelativeTime(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+
+  // A clock a few seconds out of step should not read "in 4 seconds".
+  if (seconds < 60) {
+    return "Just now";
+  }
+
+  const units: ReadonlyArray<{ limit: number; per: number; name: string }> = [
+    { limit: 3600, per: 60, name: "minute" },
+    { limit: 86400, per: 3600, name: "hour" },
+    { limit: 604800, per: 86400, name: "day" },
+  ];
+
+  for (const unit of units) {
+    if (seconds < unit.limit) {
+      const count = Math.floor(seconds / unit.per);
+      return `${count} ${unit.name}${count === 1 ? "" : "s"} ago`;
+    }
+  }
+
+  return formatDate(date);
+}
