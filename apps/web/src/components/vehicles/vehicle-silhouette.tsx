@@ -79,10 +79,17 @@ export function VehicleSilhouette({
   make,
   model,
   className,
+  animate = true,
 }: {
   make: string;
   model: string;
   className?: string;
+  /**
+   * Off where the drawing is small and repeated, such as the vehicle picker in
+   * the booking wizard. A row of turntables competing for attention is noise,
+   * and it is wasted work on a phone.
+   */
+  animate?: boolean;
 }) {
   const body = bodyTypeFor(make, model);
   const [frontX, rearX] = WHEELS[body];
@@ -92,11 +99,11 @@ export function VehicleSilhouette({
   return (
     // The perspective lives on the wrapper so the turn reads as depth rather
     // than a squash.
-    <div className={cn("car-stage", className)} aria-hidden>
-      <svg viewBox="0 0 200 76" className="car-turn w-full" fill="none">
+    <div className={cn(animate && "car-stage", className)} aria-hidden>
+      <svg viewBox="0 0 200 76" className={cn("w-full", animate && "car-turn")} fill="none">
         {/* The turntable, and the shadow that tightens as the car comes round. */}
         <ellipse cx="100" cy="66" rx="82" ry="7" className="fill-foreground/[0.07]" />
-        <ellipse cx="100" cy="66" rx="60" ry="4.5" className="car-shadow fill-foreground/10" />
+        <ellipse cx="100" cy="66" rx="60" ry="4.5" className={cn("fill-foreground/10", animate && "car-shadow")} />
 
         <path d={BODY_PATHS[body]} className="fill-primary" />
 
@@ -121,7 +128,7 @@ export function VehicleSilhouette({
           <g key={cx}>
             <circle cx={cx} cy={wheelY} r={wheelR} className="fill-foreground" />
             <circle cx={cx} cy={wheelY} r={wheelR * 0.52} className="fill-background" />
-            <g className="car-wheel" style={{ transformOrigin: `${cx}px ${wheelY}px` }}>
+            <g className={cn(animate && "car-wheel")} style={{ transformOrigin: `${cx}px ${wheelY}px` }}>
               {[0, 60, 120].map((angle) => (
                 <rect
                   key={angle}
@@ -144,7 +151,7 @@ export function VehicleSilhouette({
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className="car-glint text-accent"
+          className={cn("text-accent", animate && "car-glint")}
         />
       </svg>
     </div>

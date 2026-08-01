@@ -48,7 +48,12 @@ export function VehicleManager() {
       <p className="eyebrow">Your garage</p>
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-display text-4xl font-semibold text-foreground">My vehicles</h1>
-        {!isAdding ? (
+        {/*
+          Hidden while the list is empty, because the empty state below already
+          carries this action. Two identical buttons on one screen is a question
+          the reader has to answer for no reason.
+        */}
+        {!isAdding && vehicles.data && vehicles.data.data.length > 0 ? (
           <Button variant="accent" onClick={() => setIsAdding(true)}>
             <CirclePlus aria-hidden size={18} />
             Add a vehicle

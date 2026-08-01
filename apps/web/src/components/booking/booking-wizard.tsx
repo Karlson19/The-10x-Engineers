@@ -276,8 +276,12 @@ export function BookingWizard() {
           Steps already passed are reachable in one tap. Changing an answer four
           steps back used to mean pressing Back four times, which is where
           people give up and ring instead.
+
+          Hidden on a phone: "Step 1 of 5" and the current step's name are
+          already above, and the five words wrapped onto two lines saying the
+          same thing a third time.
         */}
-        <ol className="mt-3 flex flex-wrap gap-x-1 gap-y-1">
+        <ol className="mt-3 hidden flex-wrap gap-x-1 gap-y-1 sm:flex">
           {STEPS.map((entry, index) => {
             const isDone = index < step;
             const isCurrent = index === step;

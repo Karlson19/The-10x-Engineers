@@ -168,10 +168,13 @@ export function CatalogueManager() {
           </p>
         </div>
 
-        <Button variant="accent" onClick={openAdd}>
-          <Plus aria-hidden size={18} />
-          Add a service
-        </Button>
+        {/* The empty state carries this action when the catalogue is bare. */}
+        {catalogue.data && catalogue.data.data.length > 0 ? (
+          <Button variant="accent" onClick={openAdd}>
+            <Plus aria-hidden size={18} />
+            Add a service
+          </Button>
+        ) : null}
       </div>
 
       <div className="mt-10">

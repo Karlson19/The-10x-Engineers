@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Car, CirclePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { VehicleForm } from "@/components/vehicles/vehicle-form";
+import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
 import { useVehicles } from "@/hooks/use-vehicles";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,18 @@ export function StepVehicle({
 }) {
   const vehicles = useVehicles();
   const [isAdding, setIsAdding] = useState(false);
+
+  /*
+    One vehicle is the common case, and asking somebody to choose from a list of
+    one before they may continue is a tap that exists only to produce an error
+    message when they miss it.
+  */
+  const only = vehicles.data?.data.length === 1 ? vehicles.data.data[0] : undefined;
+  useEffect(() => {
+    if (only && !vehicleId) {
+      onSelect(only.id);
+    }
+  }, [only, vehicleId, onSelect]);
 
   if (vehicles.isPending) {
     return (
@@ -106,6 +119,12 @@ export function StepVehicle({
               >
                 {isSelected ? <span className="size-1.5 rounded-full bg-accent-foreground" /> : null}
               </span>
+              <VehicleSilhouette
+                make={vehicle.make}
+                model={vehicle.model}
+                animate={false}
+                className="w-20 shrink-0"
+              />
               <span className="min-w-0 flex-1">
                 <span className="block font-display text-lg font-semibold text-foreground">
                   {vehicle.make} {vehicle.model}

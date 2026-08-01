@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Car, ClipboardList } from "lucide-react";
 import { SECTION_LABELS, getSymptomCategory } from "@chrysmec/shared";
 import { useAuth } from "@/components/providers/auth-provider";
+import { FirstRun } from "@/components/requests/first-run";
 import { RequestCard } from "@/components/requests/request-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -31,6 +32,34 @@ export function ClientHome() {
   const vehicles = useVehicles();
 
   const firstName = user?.fullName.split(" ")[0] ?? "there";
+
+  const isReady = requests.isSuccess && vehicles.isSuccess;
+  const hasVehicle = vehicles.data ? vehicles.data.data.length > 0 : false;
+  const hasBooking = requests.data ? requests.data.data.length > 0 : false;
+
+  /*
+    A brand new account has nothing to show, and stacking two empty boxes and
+    three buttons on it was worse than useless: it offered booking before there
+    was a vehicle to book against. Until they have both, the screen is the
+    guided path instead.
+  */
+  if (isReady && !hasBooking) {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-5 py-8 sm:px-8 sm:py-14">
+        <p className="eyebrow">Welcome, {firstName}</p>
+        {/*
+          Deliberately short. A three line headline pushed the one action on
+          this screen below the tab bar on a normal phone, which is a poor way
+          to greet somebody who has just signed up.
+        */}
+        <h1 className="mt-3 font-display text-3xl font-semibold text-balance text-foreground sm:text-4xl">
+          Two steps to your first booking
+        </h1>
+
+        <FirstRun hasVehicle={hasVehicle} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
@@ -238,15 +267,6 @@ export function ClientHome() {
         </section>
       ) : null}
 
-      {/* Copper marks one action per screen, so these stay pine and outline. */}
-      <div className="mt-12 flex flex-col gap-3 sm:flex-row">
-        <Link href="/dashboard/book" className={buttonVariants({ variant: "primary" })}>
-          Book a service
-        </Link>
-        <Link href="/account" className={buttonVariants({ variant: "outline" })}>
-          Account settings
-        </Link>
-      </div>
     </div>
   );
 }

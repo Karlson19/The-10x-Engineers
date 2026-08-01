@@ -165,10 +165,13 @@ export function StaffManager() {
           </p>
         </div>
 
-        <Button variant="accent" onClick={() => setIsAdding(true)}>
-          <UserPlus aria-hidden size={18} />
-          Add a technician
-        </Button>
+        {/* The empty state carries this action when there is nobody yet. */}
+        {staff.data && staff.data.data.length > 0 ? (
+          <Button variant="accent" onClick={() => setIsAdding(true)}>
+            <UserPlus aria-hidden size={18} />
+            Add a technician
+          </Button>
+        ) : null}
       </div>
 
       <div className="mt-10">
