@@ -2,7 +2,24 @@ import type { z } from "zod";
 import { type ErrorCode, errorEnvelopeSchema, refreshResponseSchema } from "@chrysmec/shared";
 import { getAccessToken, getSessionEpoch, setRefreshedAccessToken } from "./token-store";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+/**
+ * In the browser the API is reached through this app's own origin, which
+ * next.config.ts rewrites to the real one. That is what keeps the refresh
+ * cookie first party, so it survives in Chrome incognito and wherever third
+ * party cookies are blocked.
+ *
+ * On the server there is no origin to be relative to, so the configured
+ * absolute URL is used directly.
+ */
+function resolveApiUrl(): string {
+  if (typeof window !== "undefined") {
+    return "/api/v1";
+  }
+
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+}
+
+export const API_URL = resolveApiUrl();
 
 /** Network failures are not part of the server's error envelope, so they get their own code. */
 export type ApiErrorCode = ErrorCode | "NETWORK_ERROR";

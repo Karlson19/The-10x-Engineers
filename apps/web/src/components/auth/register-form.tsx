@@ -75,9 +75,15 @@ export function RegisterForm() {
         </Alert>
       ) : null}
 
+      {/* The placeholder used to be a demo account's name. */}
       <FormField id="fullName" label="Full name" error={errors.fullName?.message}>
         {(field) => (
-          <Input {...field} {...register("fullName")} autoComplete="name" placeholder="Ama Boateng" />
+          <Input
+            {...field}
+            {...register("fullName")}
+            autoComplete="name"
+            placeholder="Your full name"
+          />
         )}
       </FormField>
 

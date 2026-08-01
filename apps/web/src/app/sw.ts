@@ -10,8 +10,16 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
-const apiOrigin = API_URL ? new URL(API_URL).origin : "";
+/**
+ * API calls now go through this app's own origin, so they are recognised by
+ * their path rather than their host. Matching on origin stopped working the
+ * moment the API moved behind the rewrite that makes the refresh cookie first
+ * party, and matching on this origin alone would have swept up every page
+ * navigation with it.
+ */
+function isApiRequest(url: URL): boolean {
+  return url.pathname.startsWith("/api/v1");
+}
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -41,7 +49,7 @@ const serwist = new Serwist({
      */
     {
       matcher: ({ url, request }) =>
-        apiOrigin !== "" && url.origin === apiOrigin && request.method === "GET",
+        isApiRequest(url) && request.method === "GET",
       handler: new NetworkFirst({
         cacheName: "chrysmec-api",
         networkTimeoutSeconds: 3,
@@ -56,7 +64,7 @@ const serwist = new Serwist({
      */
     {
       matcher: ({ url, request }) =>
-        apiOrigin !== "" && url.origin === apiOrigin && request.method !== "GET",
+        isApiRequest(url) && request.method !== "GET",
       handler: new NetworkOnly(),
     },
 
