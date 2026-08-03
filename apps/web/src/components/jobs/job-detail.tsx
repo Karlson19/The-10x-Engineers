@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import {
@@ -20,6 +21,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
+
+/*
+  Leaflet and its stylesheet are heavy and need a real window, so they load in
+  their own chunk and only on a job where the customer actually pinned
+  themselves. A job at the workshop never downloads a mapping library.
+*/
+const LocationMap = dynamic(
+  () => import("@/components/shared/location-map").then((module) => module.LocationMap),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  },
+);
 import { useJob, useUpdateJob } from "@/hooks/use-jobs";
 import { useServiceRequest, useUpdateServiceRequestStatus } from "@/hooks/use-service-requests";
 import { ApiError } from "@/lib/api/client";
@@ -193,6 +207,19 @@ export function JobDetail({ jobId }: { jobId: string }) {
             </Row>
           ) : null}
           <Row label="Booking status">{REQUEST_STATUS_LABELS[requestStatus]}</Row>
+          {/* Drawn only when the customer actually pinned themselves, so the
+              map never loads on a job at the workshop. */}
+          {serviceRequest.data?.latitude !== null &&
+          serviceRequest.data?.latitude !== undefined &&
+          serviceRequest.data.longitude !== null ? (
+            <Row label="On the map">
+              <LocationMap
+                latitude={serviceRequest.data.latitude}
+                longitude={serviceRequest.data.longitude}
+                label={`${data.vehicle.make} ${data.vehicle.model}, ${serviceRequest.data.locationText}`}
+              />
+            </Row>
+          ) : null}
           {data.estimatedCost ? (
             <Row label="Estimate">{formatCurrency(data.estimatedCost)}</Row>
           ) : null}

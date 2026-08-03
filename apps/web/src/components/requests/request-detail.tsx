@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MapPin } from "lucide-react";
@@ -24,6 +25,15 @@ import { useDeleteServiceRequest, useServiceRequest, useTimeline } from "@/hooks
 import { ApiError } from "@/lib/api/client";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { STATUS_META, statusTone } from "@/lib/status";
+
+/* Its own chunk, downloaded only when a location was actually pinned. */
+const LocationMap = dynamic(
+  () => import("@/components/shared/location-map").then((module) => module.LocationMap),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  },
+);
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -185,6 +195,17 @@ export function RequestDetail({ id }: { id: string }) {
               <MapPin aria-hidden size={18} className="mt-1 shrink-0 text-muted-foreground" />
               {data.locationText}
             </span>
+            {/* Shown back so the customer can see the pin landed where they
+                meant it to, while there is still time to say otherwise. */}
+            {data.latitude !== null && data.longitude !== null ? (
+              <div className="mt-3">
+                <LocationMap
+                  latitude={data.latitude}
+                  longitude={data.longitude}
+                  label={`${data.vehicle.make} ${data.vehicle.model}, ${data.locationText}`}
+                />
+              </div>
+            ) : null}
           </DetailRow>
           {data.job ? (
             <DetailRow label="Technician">{data.job.assignedStaff.fullName}</DetailRow>
