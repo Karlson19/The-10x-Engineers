@@ -16,6 +16,13 @@ export type BookingDraft = {
   preferredTime: string;
   locationText: string;
   /**
+   * Where the vehicle actually is, when the customer chose to share it. Optional
+   * on purpose: somebody driving the car in has no reason to, and declining the
+   * browser prompt must never block a booking.
+   */
+  latitude: number | null;
+  longitude: number | null;
+  /**
    * Generated once and kept across refreshes. It is the idempotency key the
    * server uses, so a booking that is retried can never become two bookings.
    */
@@ -44,6 +51,8 @@ export function emptyDraft(): BookingDraft {
     preferredDate: "",
     preferredTime: "09:00",
     locationText: "",
+    latitude: null,
+    longitude: null,
     clientRequestId: newClientRequestId(),
   };
 }

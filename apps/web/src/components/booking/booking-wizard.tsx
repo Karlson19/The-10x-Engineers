@@ -159,6 +159,9 @@ export function BookingWizard() {
       serviceCatalogItemIds: draft.serviceCatalogItemIds,
       preferredDateTime: new Date(`${draft.preferredDate}T${draft.preferredTime}`).toISOString(),
       locationText: draft.locationText.trim(),
+      // Only sent when the customer chose to share it.
+      latitude: draft.latitude,
+      longitude: draft.longitude,
     };
 
     /**
@@ -371,6 +374,8 @@ export function BookingWizard() {
                 preferredDate={draft.preferredDate}
                 preferredTime={draft.preferredTime}
                 locationText={draft.locationText}
+                latitude={draft.latitude}
+                longitude={draft.longitude}
                 errors={errors}
                 onChange={(patch) => {
                   setErrors({});

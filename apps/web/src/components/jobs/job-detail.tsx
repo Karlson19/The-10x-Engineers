@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import {
   REQUEST_STATUS_LABELS,
   type RequestStatus,
@@ -167,6 +167,31 @@ export function JobDetail({ jobId }: { jobId: string }) {
             </a>
           </Row>
           <Row label="Expected">{formatDateTime(data.preferredDateTime)}</Row>
+          {serviceRequest.data ? (
+            <Row label="Where">
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                {serviceRequest.data.locationText}
+                {/*
+                  The customer pinned where the vehicle is, so hand it straight
+                  to whatever map app is on this phone rather than drawing one.
+                  This is the difference between "roadside, Kumasi to Accra
+                  road" and being able to actually go there.
+                */}
+                {serviceRequest.data.latitude !== null &&
+                serviceRequest.data.longitude !== null ? (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${serviceRequest.data.latitude},${serviceRequest.data.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center gap-1.5 font-mono text-sm text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                  >
+                    <MapPin aria-hidden size={15} />
+                    Directions
+                  </a>
+                ) : null}
+              </span>
+            </Row>
+          ) : null}
           <Row label="Booking status">{REQUEST_STATUS_LABELS[requestStatus]}</Row>
           {data.estimatedCost ? (
             <Row label="Estimate">{formatCurrency(data.estimatedCost)}</Row>

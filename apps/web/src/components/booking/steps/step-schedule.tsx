@@ -1,6 +1,7 @@
 "use client";
 
 import { BUSINESS } from "@chrysmec/shared";
+import { PinLocation } from "@/components/booking/pin-location";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -24,17 +25,23 @@ export function StepSchedule({
   preferredDate,
   preferredTime,
   locationText,
+  latitude,
+  longitude,
   errors,
   onChange,
 }: {
   preferredDate: string;
   preferredTime: string;
   locationText: string;
+  latitude: number | null;
+  longitude: number | null;
   errors: Record<string, string>;
   onChange: (patch: {
     preferredDate?: string;
     preferredTime?: string;
     locationText?: string;
+    latitude?: number | null;
+    longitude?: number | null;
   }) => void;
 }) {
   const workshopAddress = `Chrysmec workshop, ${BUSINESS.city}`;
@@ -87,11 +94,26 @@ export function StepSchedule({
         )}
       </FormField>
 
+      <PinLocation
+        latitude={latitude}
+        longitude={longitude}
+        onChange={(coordinates) =>
+          onChange({
+            latitude: coordinates?.latitude ?? null,
+            longitude: coordinates?.longitude ?? null,
+          })
+        }
+      />
+
       <Button
         variant="ghost"
         size="sm"
         className="px-3"
-        onClick={() => onChange({ locationText: workshopAddress })}
+        onClick={() =>
+          // Bringing it in means the workshop's address, and no reason to keep
+          // wherever they happened to be standing when they booked.
+          onChange({ locationText: workshopAddress, latitude: null, longitude: null })
+        }
       >
         I will bring it to the workshop
       </Button>
