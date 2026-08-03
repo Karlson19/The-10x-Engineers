@@ -11,6 +11,20 @@ const server = app.listen(env.PORT, () => {
   );
 });
 
+/*
+  Open the pool as soon as we are listening rather than leaving it to whichever
+  request arrives first. On a fresh deploy that request is the platform's health
+  check, and making it pay for establishing a connection to a Neon instance that
+  may be asleep is how a perfectly healthy deploy gets marked as failed.
+
+  Deliberately not awaited and never fatal: the server answers either way, and
+  health reports the database separately.
+*/
+void prisma
+  .$connect()
+  .then(() => logger.info("Database pool ready"))
+  .catch((error: unknown) => logger.error({ err: error }, "Could not open the database pool"));
+
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, "Shutting down");
   server.close(() => {
