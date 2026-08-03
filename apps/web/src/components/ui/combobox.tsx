@@ -227,7 +227,12 @@ export function Combobox({
           ref={listRef}
           id={listId}
           role="listbox"
-          className="absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-popover py-1"
+          /*
+            overscroll-contain stops the page scrolling underneath once the
+            list reaches its end, which on a phone reads as the whole screen
+            lurching mid-gesture.
+          */
+          className="absolute z-50 mt-1 max-h-72 w-full overflow-y-auto overscroll-contain rounded-lg border border-border bg-popover py-1"
         >
           {filtered.length === 0 ? (
             <li className="px-3.5 py-3 text-base text-muted-foreground">{emptyMessage}</li>
@@ -242,12 +247,32 @@ export function Combobox({
                   id={`${listId}-${index}`}
                   role="option"
                   aria-selected={isSelected}
-                  onPointerDown={(event) => {
-                    // Beat the input's blur so the click is not lost.
-                    event.preventDefault();
-                    commit(option);
+                  /*
+                    Selection happens on click, never on pointer down.
+
+                    Committing on pointer down made the list impossible to
+                    scroll on a phone: the first thing a scroll gesture does is
+                    put a finger on an option, and that was enough to choose it.
+                    A click only fires when the finger goes down and comes up on
+                    the same option without panning, which is exactly the
+                    difference between choosing and scrolling.
+
+                    The mouse down handler keeps what the old code was really
+                    after, which is stopping the input blurring and throwing the
+                    selection away. It is deliberately mouse down rather than
+                    pointer down: no mouse event fires while a touch is being
+                    dragged, so it cannot interfere with scrolling.
+                  */
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => commit(option)}
+                  onPointerEnter={(event) => {
+                    // Only a real pointer highlights on hover. Under a finger
+                    // this would drag the highlight down the list while
+                    // scrolling.
+                    if (event.pointerType === "mouse") {
+                      setActiveIndex(index);
+                    }
                   }}
-                  onPointerEnter={() => setActiveIndex(index)}
                   className={cn(
                     "flex cursor-pointer items-center gap-3 px-2.5 py-2.5 text-base",
                     isActive ? "bg-muted" : "",
