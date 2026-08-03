@@ -12,6 +12,8 @@ export const errorCodeSchema = z.enum([
   "INSUFFICIENT_STOCK",
   "RATE_LIMITED",
   "PAYLOAD_TOO_LARGE",
+  /** The payment provider refused, or could not be reached. Not our fault, and not the customer's. */
+  "PAYMENT_FAILED",
   "INTERNAL_ERROR",
 ]);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

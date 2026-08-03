@@ -49,4 +49,12 @@ export class HttpError extends Error {
   static insufficientStock(message: string, details?: Record<string, unknown>): HttpError {
     return new HttpError(409, "INSUFFICIENT_STOCK", message, details);
   }
+
+  /**
+   * The payment provider refused or could not be reached. A 502 rather than a
+   * 500, because the fault is upstream and retrying is the sensible answer.
+   */
+  static badGateway(message: string, details?: Record<string, unknown>): HttpError {
+    return new HttpError(502, "PAYMENT_FAILED", message, details);
+  }
 }

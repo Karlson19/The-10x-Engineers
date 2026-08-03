@@ -45,7 +45,19 @@ export function createApp(): Express {
   );
 
   app.use(compression());
-  app.use(express.json({ limit: MAX_JSON_BODY_SIZE }));
+  /*
+    The raw bytes are kept alongside the parsed body because the Paystack
+    webhook signs them. Re-serialising the parsed object would not reproduce
+    the exact bytes, so the signature would never match.
+  */
+  app.use(
+    express.json({
+      limit: MAX_JSON_BODY_SIZE,
+      verify: (req, _res, buffer) => {
+        (req as express.Request).rawBody = Buffer.from(buffer);
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: MAX_JSON_BODY_SIZE }));
   app.use(cookieParser());
 

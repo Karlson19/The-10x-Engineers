@@ -78,6 +78,19 @@ export async function deleteTestUsers(): Promise<void> {
   const ids = users.map((user) => user.id);
 
   if (ids.length > 0) {
+    // Payments hold a plain reference to their booking rather than a cascading
+    // one, on purpose: money should not quietly disappear because a row above
+    // it was removed. That makes them the first thing to clear here.
+    const requests = await prisma.serviceRequest.findMany({
+      where: { clientId: { in: ids } },
+      select: { id: true },
+    });
+    const requestIds = requests.map((request) => request.id);
+
+    if (requestIds.length > 0) {
+      await prisma.payment.deleteMany({ where: { serviceRequestId: { in: requestIds } } });
+    }
+
     await prisma.serviceRequest.deleteMany({ where: { clientId: { in: ids } } });
     await prisma.vehicle.deleteMany({ where: { ownerId: { in: ids } } });
   }

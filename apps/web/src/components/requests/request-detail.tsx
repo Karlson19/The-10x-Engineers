@@ -12,6 +12,7 @@ import {
 import { EstimateApproval } from "@/components/requests/estimate-approval";
 import { RequestFeedback } from "@/components/requests/request-feedback";
 import { RequestInvoicePanel } from "@/components/requests/request-invoice";
+import { RequestPayment } from "@/components/requests/request-payment";
 import { StatusTimeline } from "@/components/requests/status-timeline";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -164,6 +165,8 @@ export function RequestDetail({ id }: { id: string }) {
 
       {/* What was done and what it came to, once there is anything to show. */}
       {data.status === "CANCELLED" ? null : <RequestInvoicePanel requestId={id} />}
+
+      {data.status === "COMPLETED" ? <RequestPayment requestId={id} /> : null}
 
       {data.status === "COMPLETED" ? <RequestFeedback requestId={id} /> : null}
 
