@@ -10,6 +10,27 @@ import { Button, buttonVariants } from "@/components/ui/button";
  * rather than on a blank page, and the customer is given the workshop's number,
  * because at that point a phone call is the working route.
  */
+/**
+ * A build that has moved on under a tab that has not.
+ *
+ * The app is a PWA, so a phone keeps a service worker and a precached copy of
+ * the last build it saw. After a deploy, a page held from before can ask for a
+ * script chunk that the new deployment no longer serves, and the import
+ * rejects. It looks exactly like a crash in whatever screen was being opened,
+ * which is misleading: the code is fine, the copy on the device is stale.
+ */
+function isStaleBuildError(error: Error): boolean {
+  return (
+    error.name === "ChunkLoadError" ||
+    /loading chunk|loading css chunk|dynamically imported module|importing a module script failed/i.test(
+      error.message,
+    )
+  );
+}
+
+/** Guards against a reload loop when the fresh copy fails for a real reason. */
+const RECOVERY_KEY = "chrysmec-stale-build-reload";
+
 export default function GlobalError({
   error,
   reset,
@@ -19,6 +40,33 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error(error);
+  }, [error]);
+
+  /*
+    Clear the stale copy and reload, once. Nothing here is a cache the app
+    cannot rebuild from the network, and the booking draft lives in local
+    storage, which is deliberately left alone.
+  */
+  useEffect(() => {
+    if (!isStaleBuildError(error) || sessionStorage.getItem(RECOVERY_KEY)) {
+      return;
+    }
+
+    sessionStorage.setItem(RECOVERY_KEY, "1");
+
+    void (async () => {
+      try {
+        const registrations = await navigator.serviceWorker?.getRegistrations();
+        await Promise.all((registrations ?? []).map((registration) => registration.unregister()));
+
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      } catch {
+        // Even if clearing failed, the reload is still worth having.
+      }
+
+      window.location.reload();
+    })();
   }, [error]);
 
   return (
@@ -34,9 +82,16 @@ export default function GlobalError({
           and we will sort it out on the phone.
         </p>
 
-        {error.digest ? (
-          <p className="mt-4 font-mono text-xs text-muted-foreground">
-            Reference {error.digest}
+        {/*
+          What actually went wrong, on the screen rather than only in a console
+          nobody standing in a workshop with a phone can open. It is the one
+          thing that makes a report over the telephone worth taking, and it is
+          kept quiet enough not to alarm somebody who only wanted to book a
+          service.
+        */}
+        {error.digest || error.message ? (
+          <p className="mt-5 font-mono text-xs break-words text-muted-foreground/80">
+            {error.digest ? `Reference ${error.digest}` : error.message}
           </p>
         ) : null}
 

@@ -17,9 +17,29 @@ export function formatCurrency(amount: string | number): string {
   })}`;
 }
 
+/**
+ * What is shown when a date cannot be read. These formatters are called
+ * straight from render with values that came off the network or out of local
+ * storage, and Intl.DateTimeFormat throws RangeError on an invalid date rather
+ * than returning anything. Thrown from render, that reaches the error boundary
+ * and takes the whole page down over one unreadable timestamp, so a bad value
+ * is shown as unknown instead.
+ */
+const UNKNOWN_DATE = "Unknown";
+
+function toDate(value: string | Date): Date | null {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 /** Dates read as "12 Aug 2026". */
 export function formatDate(value: string | Date): string {
-  const date = typeof value === "string" ? new Date(value) : value;
+  const date = toDate(value);
+
+  if (!date) {
+    return UNKNOWN_DATE;
+  }
 
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -30,7 +50,11 @@ export function formatDate(value: string | Date): string {
 
 /** Times are 24 hour, so "14:30". */
 export function formatTime(value: string | Date): string {
-  const date = typeof value === "string" ? new Date(value) : value;
+  const date = toDate(value);
+
+  if (!date) {
+    return UNKNOWN_DATE;
+  }
 
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
@@ -40,6 +64,12 @@ export function formatTime(value: string | Date): string {
 }
 
 export function formatDateTime(value: string | Date): string {
+  // Checked here as well, so an unreadable value reads "Unknown" rather than
+  // the "Unknown, Unknown" that formatting both halves separately would give.
+  if (!toDate(value)) {
+    return UNKNOWN_DATE;
+  }
+
   return `${formatDate(value)}, ${formatTime(value)}`;
 }
 
