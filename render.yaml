@@ -43,8 +43,9 @@ services:
       - key: JWT_REFRESH_SECRET
         generateValue: true
 
-      # The Vercel origin, with no trailing slash, for example
-      # https://the-10x-engineers.vercel.app
+      # The Vercel origin, with no trailing slash. The deployed one is
+      # https://chrysmec.vercel.app — the app is served from there, not from
+      # the repository-named domain this once pointed at.
       - key: CORS_ORIGIN
         sync: false
 

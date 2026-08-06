@@ -12,15 +12,23 @@ jobs:
   ping:
     name: Ping the health endpoint
     runs-on: ubuntu-latest
-    # Set the API_HEALTH_URL repository variable once the API is deployed,
-    # for example https://chrysmec-api.onrender.com/health
-    if: vars.API_HEALTH_URL != ''
+
+    # The deployed API, unless the API_HEALTH_URL repository variable overrides
+    # it. This used to be guarded by `if: vars.API_HEALTH_URL != ''`, and since
+    # that variable was never set, every run since the workflow was added was
+    # skipped and the API was never actually kept warm. A default means the
+    # workflow works on a fresh clone with nothing configured, which is the
+    # point of it.
+    env:
+      HEALTH_URL: ${{ vars.API_HEALTH_URL || 'https://chrysmec-api.onrender.com/health' }}
 
     steps:
       - name: Request /health
         run: |
-          status=$(curl --silent --show-error --max-time 60 \
+          # A sleeping instance takes close to a minute to answer, and that
+          # answer is the whole point of the ping, so the timeout allows for it.
+          status=$(curl --silent --show-error --max-time 90 \
             --output /dev/null --write-out "%{http_code}" \
-            "${{ vars.API_HEALTH_URL }}")
+            "$HEALTH_URL")
           echo "Health endpoint returned $status"
           test "$status" = "200"
