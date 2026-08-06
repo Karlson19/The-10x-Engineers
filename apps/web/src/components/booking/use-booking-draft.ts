@@ -29,15 +29,49 @@ export type BookingDraft = {
   clientRequestId: string;
 };
 
+/**
+ * The server validates this with z.uuid(), so anything that is not shaped
+ * 8-4-4-4-12 is rejected outright with "Not a valid client request identifier."
+ *
+ * The previous fallback built `${Date.now().toString(16)}-4000-8000-...` and
+ * padded it to 36 characters. Thirty six characters is not a UUID: that lays
+ * out as 11-4-4-14, so every booking made on a browser without randomUUID
+ * failed validation. Worse, the id is kept in local storage, so once a device
+ * generated a bad one it went on failing on every retry until the draft was
+ * cleared — which is not something a customer can be asked to do.
+ *
+ * randomUUID is missing in exactly the places this app is used: older Android
+ * WebViews, and any insecure context, since it is restricted to secure ones.
+ * So the fallback has to produce a real v4, not an approximation of one.
+ */
 function newClientRequestId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
-  // Older Android WebViews do not expose randomUUID over plain http.
-  return `${Date.now().toString(16)}-4000-8000-${Math.random().toString(16).slice(2, 14)}`.padEnd(
-    36,
-    "0",
-  );
+
+  const bytes = new Uint8Array(16);
+
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  // Version 4, and the RFC 4122 variant bits.
+  bytes[6] = ((bytes[6] ?? 0) & 0x0f) | 0x40;
+  bytes[8] = ((bytes[8] ?? 0) & 0x3f) | 0x80;
+
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20),
+  ].join("-");
 }
 
 export function emptyDraft(): BookingDraft {
@@ -56,6 +90,8 @@ export function emptyDraft(): BookingDraft {
     clientRequestId: newClientRequestId(),
   };
 }
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isDraft(value: unknown): value is BookingDraft {
   if (typeof value !== "object" || value === null) {
@@ -77,7 +113,23 @@ function read(): BookingDraft | null {
       return null;
     }
     const parsed: unknown = JSON.parse(raw);
-    return isDraft(parsed) ? parsed : null;
+
+    if (!isDraft(parsed)) {
+      return null;
+    }
+
+    /*
+      A draft saved by an earlier version can be carrying one of the malformed
+      identifiers, and it would fail validation on every send for as long as it
+      stayed there. Replace just the identifier and keep everything the customer
+      typed: the booking has not reached the server, so there is nothing for a
+      fresh one to duplicate.
+    */
+    if (!UUID_PATTERN.test(parsed.clientRequestId)) {
+      return { ...parsed, clientRequestId: newClientRequestId() };
+    }
+
+    return parsed;
   } catch {
     return null;
   }
