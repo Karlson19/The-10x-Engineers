@@ -443,6 +443,59 @@ describe("the estimate and approval loop", () => {
   });
 });
 
+describe("a technician who still has work", () => {
+  it("cannot be stood down until their jobs are reassigned", async () => {
+    const leaver = await createTestUser({
+      label: "leaver",
+      role: "STAFF",
+      section: "MECHANICAL",
+    });
+    const jobId = await assignJob(await createBooking(), leaver.id);
+
+    const blocked = await request(app)
+      .delete(`/api/v1/users/${leaver.id}`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    expect(blocked.status).toBe(409);
+    expect(blocked.body.error.details.openJobs).toBe(1);
+
+    // Moved to somebody else, and now they can go.
+    await request(app)
+      .patch(`/api/v1/jobs/${jobId}`)
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({ assignedStaffId: mechanic.id });
+
+    const allowed = await request(app)
+      .delete(`/api/v1/users/${leaver.id}`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    expect(allowed.status).toBe(200);
+    expect(allowed.body.user.isActive).toBe(false);
+  });
+
+  it("cannot be moved to the other section while holding jobs in this one", async () => {
+    const mover = await createTestUser({
+      label: "mover",
+      role: "STAFF",
+      section: "MECHANICAL",
+    });
+    await assignJob(await createBooking(), mover.id);
+
+    const blocked = await request(app)
+      .patch(`/api/v1/users/${mover.id}`)
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({ section: "ELECTRICAL" });
+
+    /*
+      Without this the section rule could be walked around entirely: a booking
+      may only go to a technician from its own section, but moving the person
+      afterwards took their mechanical work into electrical with them.
+    */
+    expect(blocked.status).toBe(409);
+    expect(blocked.body.error.details.openJobs).toBe(1);
+  });
+});
+
 describe("the stock ledger", () => {
   /** A part of its own per test, so counts cannot be disturbed by neighbours. */
   async function createPart(unitCost: string, quantity: number) {
