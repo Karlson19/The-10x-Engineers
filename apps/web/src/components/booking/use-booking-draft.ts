@@ -119,17 +119,30 @@ function read(): BookingDraft | null {
     }
 
     /*
+      Layer the saved draft over a fresh one rather than trusting it whole.
+
+      A draft written before a field existed simply has no key for it, and
+      reading it back gave undefined where the type promised null. That is what
+      crashed the wizard for anyone returning to a half finished booking after
+      the location pin shipped: undefined is not null, so the pin thought it had
+      coordinates and called toFixed on nothing. Filling the gaps from the empty
+      draft makes every older draft safe, including for whatever field is added
+      next.
+    */
+    const restored: BookingDraft = { ...emptyDraft(), ...parsed };
+
+    /*
       A draft saved by an earlier version can be carrying one of the malformed
       identifiers, and it would fail validation on every send for as long as it
       stayed there. Replace just the identifier and keep everything the customer
       typed: the booking has not reached the server, so there is nothing for a
       fresh one to duplicate.
     */
-    if (!UUID_PATTERN.test(parsed.clientRequestId)) {
-      return { ...parsed, clientRequestId: newClientRequestId() };
+    if (!UUID_PATTERN.test(restored.clientRequestId)) {
+      return { ...restored, clientRequestId: newClientRequestId() };
     }
 
-    return parsed;
+    return restored;
   } catch {
     return null;
   }

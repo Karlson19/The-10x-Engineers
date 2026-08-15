@@ -94,6 +94,22 @@ export function JobDetail({ jobId }: { jobId: string }) {
       ? describeSymptomAnswers(category, serviceRequest.data.symptomDetails)
       : [];
 
+  /*
+    Only when the customer actually pinned themselves, so the map never loads
+    for a job that is sitting at the workshop. Read as real numbers rather than
+    against null, because a record written before these fields existed has no
+    key for them and undefined is not null.
+  */
+  const booking = serviceRequest.data;
+  const pin =
+    booking && typeof booking.latitude === "number" && typeof booking.longitude === "number"
+      ? {
+          latitude: booking.latitude,
+          longitude: booking.longitude,
+          locationText: booking.locationText,
+        }
+      : null;
+
   async function saveDiagnosis(): Promise<void> {
     setActionError(null);
 
@@ -209,14 +225,12 @@ export function JobDetail({ jobId }: { jobId: string }) {
           <Row label="Booking status">{REQUEST_STATUS_LABELS[requestStatus]}</Row>
           {/* Drawn only when the customer actually pinned themselves, so the
               map never loads on a job at the workshop. */}
-          {serviceRequest.data?.latitude !== null &&
-          serviceRequest.data?.latitude !== undefined &&
-          serviceRequest.data.longitude !== null ? (
+          {pin ? (
             <Row label="On the map">
               <LocationMap
-                latitude={serviceRequest.data.latitude}
-                longitude={serviceRequest.data.longitude}
-                label={`${data.vehicle.make} ${data.vehicle.model}, ${serviceRequest.data.locationText}`}
+                latitude={pin.latitude}
+                longitude={pin.longitude}
+                label={`${data.vehicle.make} ${data.vehicle.model}, ${pin.locationText}`}
               />
             </Row>
           ) : null}

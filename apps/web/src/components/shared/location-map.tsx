@@ -81,6 +81,16 @@ export function LocationMap({
     };
   }, [latitude, longitude, label]);
 
+  /*
+    A map with nothing to point at is not worth taking the page down for. The
+    callers all check first, but this is rendered from stored data and a saved
+    draft written before these fields existed carries neither, so it refuses
+    rather than trusting the coordinates it was handed.
+  */
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
   return (
     <div>
       <div

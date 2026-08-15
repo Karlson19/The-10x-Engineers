@@ -197,7 +197,7 @@ export function RequestDetail({ id }: { id: string }) {
             </span>
             {/* Shown back so the customer can see the pin landed where they
                 meant it to, while there is still time to say otherwise. */}
-            {data.latitude !== null && data.longitude !== null ? (
+            {typeof data.latitude === "number" && typeof data.longitude === "number" ? (
               <div className="mt-3">
                 <LocationMap
                   latitude={data.latitude}

@@ -33,7 +33,12 @@ export function PinLocation({
   const [status, setStatus] = useState<"idle" | "locating" | "denied" | "unavailable">("idle");
   const prefersReducedMotion = useReducedMotion();
 
-  const pinned = latitude !== null && longitude !== null;
+  /*
+    Checked as real numbers rather than against null. An older saved draft has
+    no key for these at all, and undefined is not null, so a looser test told
+    this component it had coordinates and it called toFixed on nothing.
+  */
+  const pinned = typeof latitude === "number" && typeof longitude === "number";
 
   function locate(): void {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
