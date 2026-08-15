@@ -38,6 +38,7 @@ import { useJob, useUpdateJob } from "@/hooks/use-jobs";
 import { useServiceRequest, useUpdateServiceRequestStatus } from "@/hooks/use-service-requests";
 import { ApiError } from "@/lib/api/client";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { Reveal } from "@/components/shared/reveal";
 import { STATUS_META } from "@/lib/status";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -185,7 +186,7 @@ export function JobDetail({ jobId }: { jobId: string }) {
         </Alert>
       ) : null}
 
-      <section className="mt-10">
+      <Reveal as="section" delay={0.05} className="mt-10">
         <h2 className="border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           Customer and vehicle
         </h2>
@@ -238,9 +239,9 @@ export function JobDetail({ jobId }: { jobId: string }) {
             <Row label="Estimate">{formatCurrency(data.estimatedCost)}</Row>
           ) : null}
         </dl>
-      </section>
+      </Reveal>
 
-      <section className="mt-10">
+      <Reveal as="section" delay={0.08} className="mt-10">
         <h2 className="border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           What the customer told us
         </h2>
@@ -262,9 +263,9 @@ export function JobDetail({ jobId }: { jobId: string }) {
             ))}
           </dl>
         )}
-      </section>
+      </Reveal>
 
-      <section className="mt-10">
+      <Reveal as="section" delay={0.11} className="mt-10">
         <h2 className="border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           Diagnosis
         </h2>
@@ -292,17 +293,17 @@ export function JobDetail({ jobId }: { jobId: string }) {
             </Button>
           )}
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mt-10">
+      <Reveal as="section" delay={0.14} className="mt-10">
         <WorkLogEditor
           jobId={jobId}
           section={data.section}
           isLocked={data.status === "COMPLETED"}
         />
-      </section>
+      </Reveal>
 
-      <section className="mt-10">
+      <Reveal as="section" delay={0.17} className="mt-10">
         <h2 className="border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           Move this job on
         </h2>
@@ -369,7 +370,7 @@ export function JobDetail({ jobId }: { jobId: string }) {
             </div>
           </div>
         )}
-      </section>
+      </Reveal>
     </div>
   );
 }

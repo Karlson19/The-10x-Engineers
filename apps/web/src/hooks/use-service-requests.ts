@@ -6,6 +6,7 @@ import type {
   CreateServiceRequest,
   RequestStatus,
   Section,
+  ServiceRequest,
   UpdateStatusRequest,
 } from "@chrysmec/shared";
 import {
@@ -124,9 +125,39 @@ export function useCreateServiceRequest() {
  */
 export function useUpdateServiceRequestStatus(id: string) {
   const queryClient = useQueryClient();
+  const detailKey = [...REQUESTS_KEY, "detail", id] as const;
 
   return useMutation({
     mutationFn: (input: UpdateStatusRequest) => updateServiceRequestStatus(id, input),
+
+    /*
+      The badge moves the moment the button is pressed rather than after the
+      round trip. On a cold API that round trip is seconds, and watching a
+      screen do nothing after you have pressed something is what makes an app
+      feel broken. The server still decides: if it refuses, onError puts the
+      old status back and the caller shows the reason.
+    */
+    async onMutate(input) {
+      await queryClient.cancelQueries({ queryKey: detailKey });
+      const previous = queryClient.getQueryData<ServiceRequest>(detailKey);
+
+      if (previous) {
+        queryClient.setQueryData<ServiceRequest>(detailKey, {
+          ...previous,
+          status: input.status,
+          estimatedCost: input.estimatedCost ?? previous.estimatedCost,
+        });
+      }
+
+      return { previous };
+    },
+
+    onError(_error, _input, context) {
+      if (context?.previous) {
+        queryClient.setQueryData(detailKey, context.previous);
+      }
+    },
+
     onSuccess(updated) {
       queryClient.setQueryData([...REQUESTS_KEY, "detail", id], updated);
       void queryClient.invalidateQueries({ queryKey: [...REQUESTS_KEY, "timeline", id] });

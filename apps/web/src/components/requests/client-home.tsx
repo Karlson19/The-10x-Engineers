@@ -15,6 +15,7 @@ import { useVehicles } from "@/hooks/use-vehicles";
 import { formatDateTime } from "@/lib/format";
 import { StageDots } from "@/components/requests/stage-dots";
 import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
+import { Reveal } from "@/components/shared/reveal";
 import { STATUS_META, statusTone } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +70,7 @@ export function ClientHome() {
       </h1>
 
       {/* Active work */}
-      <section className="mt-10">
+      <Reveal as="section" delay={0.05} className="mt-10">
         <h2 className="border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           Happening now
         </h2>
@@ -189,10 +190,10 @@ export function ClientHome() {
             );
           })()
         )}
-      </section>
+      </Reveal>
 
       {/* Vehicles */}
-      <section className="mt-12">
+      <Reveal as="section" delay={0.1} className="mt-12">
         <div className="flex items-baseline justify-between gap-4 border-b-2 border-foreground/85 pb-3">
           <h2 className="font-display text-xl font-semibold text-foreground">Your vehicles</h2>
           <Link
@@ -245,11 +246,11 @@ export function ClientHome() {
             ))}
           </ul>
         )}
-      </section>
+      </Reveal>
 
       {/* History */}
       {!requests.isPending && !requests.isError && requests.data.data.length > 0 ? (
-        <section className="mt-12">
+        <Reveal as="section" delay={0.15} className="mt-12">
           <div className="flex items-baseline justify-between gap-4 border-b-2 border-foreground/85 pb-3">
             <h2 className="font-display text-xl font-semibold text-foreground">Recent history</h2>
             <Link
@@ -264,7 +265,7 @@ export function ClientHome() {
               <RequestCard key={item.id} serviceRequest={item} />
             ))}
           </div>
-        </section>
+        </Reveal>
       ) : null}
 
     </div>

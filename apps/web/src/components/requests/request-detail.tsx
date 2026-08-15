@@ -24,6 +24,7 @@ import { ErrorState } from "@/components/ui/states";
 import { useDeleteServiceRequest, useServiceRequest, useTimeline } from "@/hooks/use-service-requests";
 import { ApiError } from "@/lib/api/client";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { Reveal } from "@/components/shared/reveal";
 import { STATUS_META, statusTone } from "@/lib/status";
 
 /* Its own chunk, downloaded only when a location was actually pinned. */
@@ -148,7 +149,7 @@ export function RequestDetail({ id }: { id: string }) {
       </p>
 
       {/* The signature screen: where the vehicle is, at a glance. */}
-      <section className="mt-12">
+      <Reveal as="section" delay={0.05} className="mt-12">
         <h2 className="mb-7 border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           Progress
         </h2>
@@ -169,7 +170,7 @@ export function RequestDetail({ id }: { id: string }) {
         ) : (
           <StatusTimeline status={data.status} events={timeline.data} />
         )}
-      </section>
+      </Reveal>
 
       {data.status === "AWAITING_APPROVAL" ? <EstimateApproval request={data} /> : null}
 
@@ -180,7 +181,7 @@ export function RequestDetail({ id }: { id: string }) {
 
       {data.status === "COMPLETED" ? <RequestFeedback requestId={id} /> : null}
 
-      <section className="mt-12">
+      <Reveal as="section" delay={0.1} className="mt-12">
         <h2 className="mb-2 border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
           Booking details
         </h2>
@@ -231,10 +232,10 @@ export function RequestDetail({ id }: { id: string }) {
           ) : null}
           <DetailRow label="Booked on">{formatDateTime(data.createdAt)}</DetailRow>
         </dl>
-      </section>
+      </Reveal>
 
       {answers.length > 0 ? (
-        <section className="mt-12">
+        <Reveal as="section" delay={0.15} className="mt-12">
           <h2 className="mb-2 border-b-2 border-foreground/85 pb-3 font-display text-xl font-semibold text-foreground">
             What you told us
           </h2>
@@ -245,7 +246,7 @@ export function RequestDetail({ id }: { id: string }) {
               </DetailRow>
             ))}
           </dl>
-        </section>
+        </Reveal>
       ) : null}
 
       {deleteError ? (

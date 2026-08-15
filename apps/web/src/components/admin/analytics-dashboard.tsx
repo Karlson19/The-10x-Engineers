@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { useAnalyticsSummary } from "@/hooks/use-analytics";
 import { formatCurrency } from "@/lib/format";
+import { Reveal } from "@/components/shared/reveal";
 import { STATUS_META, statusTone } from "@/lib/status";
 
 /** The last twelve months, newest first, as YYYY-MM. */
@@ -157,7 +158,7 @@ export function AnalyticsDashboard() {
               />
             </div>
 
-            <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <Reveal as="section" delay={0.3} className="rounded-lg border border-border bg-card p-5 sm:p-6">
               <h2 className="font-display text-xl font-semibold text-card-foreground">
                 Revenue against parts cost
               </h2>
@@ -167,10 +168,10 @@ export function AnalyticsDashboard() {
               <div className="mt-6">
                 <LazyRevenueChart data={analytics.data.revenueByMonth} />
               </div>
-            </section>
+            </Reveal>
 
             <div className="grid gap-3 lg:grid-cols-2">
-              <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+              <Reveal as="section" delay={0.34} className="rounded-lg border border-border bg-card p-5 sm:p-6">
                 <h2 className="font-display text-xl font-semibold text-card-foreground">
                   Where bookings stand
                 </h2>
@@ -202,9 +203,9 @@ export function AnalyticsDashboard() {
                     );
                   })}
                 </dl>
-              </section>
+              </Reveal>
 
-              <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+              <Reveal as="section" delay={0.38} className="rounded-lg border border-border bg-card p-5 sm:p-6">
                 <h2 className="font-display text-xl font-semibold text-card-foreground">
                   Most requested services
                 </h2>
@@ -240,10 +241,10 @@ export function AnalyticsDashboard() {
                     ))}
                   </ol>
                 )}
-              </section>
+              </Reveal>
             </div>
 
-            <section className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <Reveal as="section" delay={0.42} className="rounded-lg border border-border bg-card p-5 sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <h2 className="font-display text-xl font-semibold text-card-foreground">
                   Low stock
@@ -285,7 +286,7 @@ export function AnalyticsDashboard() {
                   ))}
                 </ul>
               )}
-            </section>
+            </Reveal>
           </div>
         ) : null}
       </div>

@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateJob, CreateWorkLogEntry, UpdateJob } from "@chrysmec/shared";
+import type {
+  CreateJob,
+  CreateWorkLogEntry,
+  UpdateJob,
+  WorkLogResponse,
+} from "@chrysmec/shared";
 import {
   type JobFilters,
   addWorkLogEntry,
@@ -79,9 +84,40 @@ export function useAddWorkLogEntry(jobId: string) {
 
 export function useRemoveWorkLogEntry(jobId: string) {
   const queryClient = useQueryClient();
+  const workLogKey = [...JOBS_KEY, "worklog", jobId] as const;
 
   return useMutation({
     mutationFn: (entryId: string) => removeWorkLogEntry(jobId, entryId),
+
+    /*
+      The line goes the moment it is confirmed, and the running total with it.
+      Removing something and watching it sit there while the request travels is
+      the moment a technician presses the button again.
+    */
+    async onMutate(entryId) {
+      await queryClient.cancelQueries({ queryKey: workLogKey });
+      const previous = queryClient.getQueryData<WorkLogResponse>(workLogKey);
+
+      if (previous) {
+        const remaining = previous.data.filter((entry) => entry.id !== entryId);
+        queryClient.setQueryData<WorkLogResponse>(workLogKey, {
+          ...previous,
+          data: remaining,
+          total: remaining
+            .reduce((sum, entry) => sum + Number.parseFloat(entry.lineTotal), 0)
+            .toFixed(2),
+        });
+      }
+
+      return { previous };
+    },
+
+    onError(_error, _entryId, context) {
+      if (context?.previous) {
+        queryClient.setQueryData(workLogKey, context.previous);
+      }
+    },
+
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "worklog", jobId] });
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "detail", jobId] });
