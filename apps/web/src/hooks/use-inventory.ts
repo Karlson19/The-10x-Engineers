@@ -19,7 +19,9 @@ import {
 
 export const INVENTORY_KEY = ["inventory"] as const;
 
-export function useInventory(options: { section?: Section; lowStock?: boolean } = {}) {
+export function useInventory(
+  options: { section?: Section; lowStock?: boolean; search?: string } = {},
+) {
   return useQuery({
     queryKey: [...INVENTORY_KEY, options] as const,
     queryFn: () => fetchInventory(options),

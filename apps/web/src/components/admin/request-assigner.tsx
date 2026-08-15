@@ -7,8 +7,9 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import { useToast } from "@/components/ui/toast";
 import { useTechnicians } from "@/hooks/use-analytics";
-import { useCreateJob } from "@/hooks/use-jobs";
+import { useCreateJob, useJobs } from "@/hooks/use-jobs";
 import { ApiError } from "@/lib/api/client";
 
 /**
@@ -17,13 +18,29 @@ import { ApiError } from "@/lib/api/client";
  */
 export function RequestAssigner({ serviceRequest }: { serviceRequest: ServiceRequest }) {
   const technicians = useTechnicians();
+  // Every job still on the floor, so the picker can say who is already loaded.
+  const openJobs = useJobs({ status: "OPEN" });
   const createJob = useCreateJob();
+  const { showToast } = useToast();
   const [staffId, setStaffId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const eligible = (technicians.data?.data ?? []).filter(
-    (person) => person.section === serviceRequest.section,
-  );
+  /*
+    Who is free, least busy first.
+
+    Assigning used to be a plain list of names, which meant picking somebody
+    without knowing whether they already had five cars in front of them. The
+    open count is the whole basis for choosing well, so it is on the option
+    itself, and the order puts the sensible answer at the top.
+  */
+  const eligible = (technicians.data?.data ?? [])
+    .filter((person) => person.section === serviceRequest.section)
+    .map((person) => ({
+      ...person,
+      openJobs: (openJobs.data?.data ?? []).filter((job) => job.assignedStaff.id === person.id)
+        .length,
+    }))
+    .sort((a, b) => a.openJobs - b.openJobs);
 
   if (serviceRequest.job) {
     return (
@@ -67,6 +84,11 @@ export function RequestAssigner({ serviceRequest }: { serviceRequest: ServiceReq
               {eligible.map((person) => (
                 <option key={person.id} value={person.id}>
                   {person.fullName}
+                  {openJobs.isPending
+                    ? ""
+                    : person.openJobs === 0
+                      ? " (free)"
+                      : ` (${person.openJobs} open)`}
                 </option>
               ))}
             </Select>
@@ -86,6 +108,12 @@ export function RequestAssigner({ serviceRequest }: { serviceRequest: ServiceReq
                 serviceRequestId: serviceRequest.id,
                 assignedStaffId: staffId,
                 scheduleRequest: true,
+              });
+              const person = eligible.find((candidate) => candidate.id === staffId);
+              showToast({
+                tone: "success",
+                title: "Assigned and scheduled",
+                body: `${serviceRequest.reference} is with ${person?.fullName ?? "the technician"}, and the customer has been told.`,
               });
             } catch (caught) {
               setError(

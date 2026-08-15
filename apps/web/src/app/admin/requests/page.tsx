@@ -6,16 +6,21 @@ import { motion } from "motion/react";
 import { ClipboardList } from "lucide-react";
 import {
   REQUEST_STATUSES,
+  SECTIONS,
   SECTION_LABELS,
   type RequestStatus,
+  type Section,
   getSymptomCategory,
 } from "@chrysmec/shared";
 import { RequestAssigner } from "@/components/admin/request-assigner";
 import { StageDots } from "@/components/requests/stage-dots";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { VehicleSilhouette } from "@/components/vehicles/vehicle-silhouette";
+import { useDebounced } from "@/hooks/use-debounced";
 import { useServiceRequests } from "@/hooks/use-service-requests";
 import { formatDateTime } from "@/lib/format";
 import { motionTokens } from "@/lib/motion";
@@ -26,7 +31,29 @@ type Filter = RequestStatus | "ALL";
 
 export default function AdminRequestsPage() {
   const [status, setStatus] = useState<Filter>("SUBMITTED");
-  const requests = useServiceRequests(status === "ALL" ? {} : { status });
+  const [section, setSection] = useState<Section | "ALL">("ALL");
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+
+  /*
+    The typing is not sent on every keystroke. Each one would be a request over
+    mobile data, and the answer to a half typed registration is noise.
+  */
+  const search = useDebounced(searchInput.trim(), 300);
+
+  const requests = useServiceRequests({
+    ...(status === "ALL" ? {} : { status }),
+    ...(section === "ALL" ? {} : { section }),
+    ...(search.length > 0 ? { search } : {}),
+    page,
+    limit: 20,
+  });
+
+  /** Any change of filter starts again at the first page. */
+  function refine(change: () => void): void {
+    change();
+    setPage(1);
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -42,7 +69,7 @@ export default function AdminRequestsPage() {
             key={option}
             type="button"
             aria-pressed={status === option}
-            onClick={() => setStatus(option)}
+            onClick={() => refine(() => setStatus(option))}
             className={cn(
               "min-h-11 rounded-lg border px-4 text-sm transition-colors",
               status === option
@@ -53,6 +80,40 @@ export default function AdminRequestsPage() {
             {option === "ALL" ? "All" : STATUS_META[option].label}
           </button>
         ))}
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <div className="sm:max-w-xs sm:flex-1">
+          <label htmlFor="request-search" className="sr-only">
+            Search bookings
+          </label>
+          <Input
+            id="request-search"
+            type="search"
+            value={searchInput}
+            placeholder="Reference, registration, name or phone"
+            onChange={(event) => refine(() => setSearchInput(event.target.value))}
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(["ALL", ...SECTIONS] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={section === option}
+              onClick={() => refine(() => setSection(option))}
+              className={cn(
+                "min-h-11 rounded-lg border px-4 text-sm transition-colors",
+                section === option
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-input text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+              )}
+            >
+              {option === "ALL" ? "Both sections" : SECTION_LABELS[option]}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-8">
@@ -76,8 +137,12 @@ export default function AdminRequestsPage() {
         {requests.isSuccess && requests.data.data.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
-            title="Nothing in this view"
-            body="No bookings have this status right now. Choose another filter."
+            title="Nothing matches"
+            body={
+              search.length > 0
+                ? `No booking matches "${search}". Try a registration, a reference like CH-7F3A21, or a customer's name.`
+                : "No bookings match these filters right now. Choose another status or section."
+            }
           />
         ) : null}
 
@@ -159,6 +224,16 @@ export default function AdminRequestsPage() {
               );
             })}
           </ul>
+        ) : null}
+
+        {requests.isSuccess && requests.data.data.length > 0 ? (
+          <Pagination
+            page={requests.data.meta.page}
+            totalPages={requests.data.meta.totalPages}
+            total={requests.data.meta.total}
+            label="bookings"
+            onChange={setPage}
+          />
         ) : null}
       </div>
     </div>

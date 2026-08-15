@@ -5,8 +5,10 @@ import { Boxes, TriangleAlert } from "lucide-react";
 import type { InventoryItem } from "@chrysmec/shared";
 import { PartIcon } from "@/components/inventory/part-icon";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
+import { useDebounced } from "@/hooks/use-debounced";
 import { useInventory } from "@/hooks/use-inventory";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -133,7 +135,15 @@ export function InventoryTable({
   renderAction?: (item: InventoryItem) => React.ReactNode;
 }) {
   const [lowStockOnly, setLowStockOnly] = useState(false);
-  const inventory = useInventory({ section, lowStock: lowStockOnly });
+  const [searchInput, setSearchInput] = useState("");
+  // Not sent on every keystroke: these users are on metered mobile data.
+  const search = useDebounced(searchInput.trim(), 300);
+
+  const inventory = useInventory({
+    section,
+    lowStock: lowStockOnly,
+    ...(search.length > 0 ? { search } : {}),
+  });
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -146,7 +156,20 @@ export function InventoryTable({
         {headerAction}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="mt-8 sm:max-w-xs">
+        <label htmlFor="stock-search" className="sr-only">
+          Search parts
+        </label>
+        <Input
+          id="stock-search"
+          type="search"
+          value={searchInput}
+          placeholder="Part name or stock code"
+          onChange={(event) => setSearchInput(event.target.value)}
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
         {[
           { value: false, label: "Everything" },
           { value: true, label: "Needs reordering" },
@@ -189,11 +212,19 @@ export function InventoryTable({
         {inventory.isSuccess && inventory.data.data.length === 0 ? (
           <EmptyState
             icon={Boxes}
-            title={lowStockOnly ? "Nothing needs reordering" : "No parts listed"}
+            title={
+              search.length > 0
+                ? "No part matches"
+                : lowStockOnly
+                  ? "Nothing needs reordering"
+                  : "No parts listed"
+            }
             body={
-              lowStockOnly
-                ? "Every part is above its reorder level."
-                : "Once parts are added they will show here with live counts."
+              search.length > 0
+                ? `Nothing matches "${search}". Try part of the name, or a stock code like MEC-BRK-PADF.`
+                : lowStockOnly
+                  ? "Every part is above its reorder level."
+                  : "Once parts are added they will show here with live counts."
             }
           />
         ) : null}

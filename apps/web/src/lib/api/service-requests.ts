@@ -25,16 +25,27 @@ import { apiRequest, apiRequestVoid } from "./client";
 /** Reading feedback answers null when none has been left, which is normal. */
 const feedbackReadSchema = z.object({ feedback: feedbackSchema.nullable() });
 
-export type RequestFilters = Partial<Pick<ServiceRequestListQuery, "status" | "vehicleId">>;
+export type RequestFilters = Partial<
+  Pick<ServiceRequestListQuery, "status" | "vehicleId" | "section" | "search" | "page" | "limit">
+>;
 
 function toQueryString(filters: RequestFilters): string {
-  const params = new URLSearchParams({ limit: "50" });
+  const params = new URLSearchParams({ limit: String(filters.limit ?? 50) });
 
   if (filters.status) {
     params.set("status", filters.status);
   }
   if (filters.vehicleId) {
     params.set("vehicleId", filters.vehicleId);
+  }
+  if (filters.section) {
+    params.set("section", filters.section);
+  }
+  if (filters.search) {
+    params.set("search", filters.search);
+  }
+  if (filters.page && filters.page > 1) {
+    params.set("page", String(filters.page));
   }
 
   return params.toString();

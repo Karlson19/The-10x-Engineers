@@ -71,12 +71,26 @@ function scopeFor(
     where.vehicleId = query.vehicleId;
   }
   if (query?.search) {
+    const term = query.search.trim();
+
     where.OR = [
-      { vehicle: { registrationNo: { contains: query.search, mode: "insensitive" } } },
-      { client: { fullName: { contains: query.search, mode: "insensitive" } } },
-      { client: { phone: { contains: query.search } } },
-      { locationText: { contains: query.search, mode: "insensitive" } },
+      { vehicle: { registrationNo: { contains: term, mode: "insensitive" } } },
+      { client: { fullName: { contains: term, mode: "insensitive" } } },
+      { client: { phone: { contains: term } } },
+      { locationText: { contains: term, mode: "insensitive" } },
     ];
+
+    /*
+      The job reference too, which is the thing a customer actually reads out
+      on the phone. It is the first six characters of the id with the dashes
+      taken out, so "CH-7F3A21", "7f3a21" and a full id all have to find the
+      same booking. Anything that is not hex is not a reference and is left to
+      the other clauses.
+    */
+    const asReference = term.replace(/^CH-/i, "").replace(/-/g, "");
+    if (/^[0-9a-f]{1,32}$/i.test(asReference)) {
+      where.OR.push({ id: { startsWith: asReference.toLowerCase() } });
+    }
   }
 
   return where;

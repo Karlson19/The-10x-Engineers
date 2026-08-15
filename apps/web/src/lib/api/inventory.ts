@@ -17,7 +17,7 @@ import { apiRequest } from "./client";
 const itemResponseSchema = z.object({ item: inventoryItemSchema });
 
 export function fetchInventory(
-  options: { section?: Section; lowStock?: boolean } = {},
+  options: { section?: Section; lowStock?: boolean; search?: string } = {},
 ): Promise<InventoryListResponse> {
   const params = new URLSearchParams({ limit: "100" });
 
@@ -26,6 +26,9 @@ export function fetchInventory(
   }
   if (options.lowStock) {
     params.set("lowStock", "true");
+  }
+  if (options.search) {
+    params.set("search", options.search);
   }
 
   return apiRequest(`/inventory?${params.toString()}`, inventoryListResponseSchema);

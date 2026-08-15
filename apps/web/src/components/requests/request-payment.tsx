@@ -116,6 +116,7 @@ export function RequestPayment({ requestId }: { requestId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [pendingReference, setPendingReference] = useState<string | null>(null);
   const confirmedRef = useRef(false);
 
   const justPaid = searchParams.get("paid") === "1";
@@ -136,11 +137,33 @@ export function RequestPayment({ requestId }: { requestId: string }) {
     }
 
     confirmedRef.current = true;
+    setPendingReference(pending.reference);
     confirm
       .mutateAsync(pending.reference)
-      .catch(() => setError("We could not confirm that payment. Give it a moment and refresh."))
+      .catch(() =>
+        setError(
+          "We could not confirm that payment yet. Your money is safe: the provider tells us separately, so this usually settles within a minute.",
+        ),
+      )
       .finally(() => router.replace(`/dashboard/requests/${requestId}`, { scroll: false }));
   }, [justPaid, payments.data, confirm, router, requestId]);
+
+  /** Asking again, rather than leaving somebody to refresh the page by hand. */
+  async function checkAgain(): Promise<void> {
+    if (!pendingReference) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await confirm.mutateAsync(pendingReference);
+    } catch {
+      setError(
+        "Still not confirmed. If it has been more than a few minutes, ring the workshop with your receipt number and we will sort it out.",
+      );
+    }
+  }
 
   async function pay(): Promise<void> {
     setError(null);
@@ -158,7 +181,13 @@ export function RequestPayment({ requestId }: { requestId: string }) {
     }
   }
 
-  if (payments.isPending) {
+  /*
+    The invoice has to be waited for as well as the payments. What is owed is
+    the invoice total less what has been paid, so while the invoice was still
+    loading that came out as zero and the customer was told there was nothing
+    to pay, a moment before the bill appeared.
+  */
+  if (payments.isPending || invoice.isPending) {
     return (
       <section className="mt-12" aria-busy="true">
         <span className="sr-only">Loading payment</span>
@@ -180,8 +209,20 @@ export function RequestPayment({ requestId }: { requestId: string }) {
       </h2>
 
       {error ? (
-        <Alert tone="error" title="Payment problem" className="mb-5">
+        <Alert tone="error" title="Payment not confirmed yet" className="mb-5">
           {error}
+          {pendingReference ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => void checkAgain()}
+              isPending={confirm.isPending}
+              pendingLabel="Checking"
+            >
+              Check again
+            </Button>
+          ) : null}
         </Alert>
       ) : null}
 
