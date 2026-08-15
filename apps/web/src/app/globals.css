@@ -27,11 +27,20 @@
   --primary-hover: 238 50% 45%;     /* #3A3EAE */
   --primary-foreground: 0 0% 100%;
 
-  --accent: 356 82% 43%;            /* #C81420 brand red */
-  --accent-hover: 356 82% 35%;      /* #A5101A */
-  --accent-foreground: 0 0% 100%;   /* white text on red */
-  --accent-subtle: 0 81% 96%;       /* #FDECEC badge fill */
-  --accent-on-dark: 0 100% 71%;     /* #FF6B6B red that holds up on a blue surface */
+  /*
+    The action colour, and only that: the one thing on a screen you are meant
+    to press. It used to be the brand red, which meant "Book a service" and
+    "Delete this booking" were the same colour, and a warm amber against the
+    deep blue reads as go where red reads as stop. Red keeps its proper job
+    below, on destructive and on error, and stays in the logo mark.
+  */
+  --accent: 37 91% 55%;             /* #F5A524 amber */
+  --accent-hover: 36 84% 48%;       /* #E08F14 */
+  --accent-foreground: 237 37% 12%; /* ink on amber, 8.8:1 */
+  --accent-subtle: 40 87% 94%;      /* #FDF1DC badge fill */
+  --accent-on-dark: 37 91% 55%;     /* amber holds up on the blue panel at 5.2:1 */
+  /* Amber is too light to be legible as text on white, so text uses this. */
+  --accent-text: 30 88% 31%;        /* #96500A */
 
   /*
     Large brand panels, such as the column beside the sign in form. Separate
@@ -78,11 +87,13 @@
   --primary-hover: 236 75% 76%;     /* #949AF0 */
   --primary-foreground: 231 37% 7%; /* ink text on light blue */
 
-  --accent: 0 100% 71%;             /* #FF6B6B */
-  --accent-hover: 0 100% 77%;       /* #FF8A8A */
-  --accent-foreground: 237 37% 12%; /* ink text on bright red */
-  --accent-subtle: 330 24% 13%;
-  --accent-on-dark: 0 100% 71%;
+  --accent: 37 91% 55%;             /* #F5A524, the same amber: it carries on both grounds */
+  --accent-hover: 36 100% 65%;      /* #FFB74D */
+  --accent-foreground: 237 37% 12%; /* ink on amber */
+  --accent-subtle: 34 30% 15%;
+  --accent-on-dark: 37 91% 55%;
+  /* Amber is legible as text on a dark ground, so this matches the fill. */
+  --accent-text: 37 91% 55%;
 
   --brand-surface: 231 41% 16%;     /* #191D3A deep navy panel */
   --brand-surface-foreground: 231 39% 94%;
@@ -125,6 +136,7 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-accent-subtle: hsl(var(--accent-subtle));
   --color-accent-on-dark: hsl(var(--accent-on-dark));
+  --color-accent-text: hsl(var(--accent-text));
 
   --color-brand-surface: hsl(var(--brand-surface));
   --color-brand-surface-foreground: hsl(var(--brand-surface-foreground));

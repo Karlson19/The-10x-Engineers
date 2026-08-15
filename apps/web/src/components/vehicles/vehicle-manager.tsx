@@ -159,7 +159,7 @@ export function VehicleManager() {
                         ) : (
                           <Link
                             href={`/dashboard/requests?vehicle=${vehicle.id}`}
-                            className="inline-flex min-h-11 items-center text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                            className="inline-flex min-h-11 items-center text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
                           >
                             {vehicle.serviceRequestCount} service
                             {vehicle.serviceRequestCount === 1 ? "" : "s"} on record

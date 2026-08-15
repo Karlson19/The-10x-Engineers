@@ -10,7 +10,9 @@ import {
   YAxis,
 } from "recharts";
 import { useReducedMotion } from "motion/react";
+import { ChartSpline } from "lucide-react";
 import type { MonthlyPoint } from "@chrysmec/shared";
+import { EmptyState } from "@/components/ui/states";
 import { formatCurrency } from "@/lib/format";
 
 function monthDate(month: string): Date {
@@ -77,6 +79,23 @@ export function RevenueChart({ data }: { data: readonly MonthlyPoint[] }) {
     revenue: Number.parseFloat(point.revenue),
     expenses: Number.parseFloat(point.expenses),
   }));
+
+  /*
+    A chart of nothing is worse than no chart. Six months of flat zeroes drawn
+    against a full axis reads as a broken graph rather than as a quiet period,
+    and that is exactly what a new workshop sees on its first day.
+  */
+  const hasAnything = points.some((point) => point.revenue > 0 || point.expenses > 0);
+
+  if (!hasAnything) {
+    return (
+      <EmptyState
+        icon={ChartSpline}
+        title="No money has moved yet"
+        body="Once a job is finished and paid for, the revenue against what the parts cost will be plotted here across six months."
+      />
+    );
+  }
 
   return (
     <div>

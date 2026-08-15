@@ -106,7 +106,7 @@ export function LocationMap({
         href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
         target="_blank"
         rel="noreferrer"
-        className="mt-1 inline-flex min-h-11 items-center text-base text-foreground underline decoration-accent decoration-2 underline-offset-4"
+        className="mt-1 inline-flex min-h-11 items-center text-base text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
       >
         Open directions from {BUSINESS.city}
       </a>

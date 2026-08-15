@@ -96,7 +96,7 @@ export function JobQueue() {
             className={cn(
               "min-h-11 rounded-lg px-3 font-mono text-xs tracking-[0.1em] uppercase transition-colors",
               when === filter.value
-                ? "bg-accent-subtle text-accent-hover dark:bg-accent/15 dark:text-accent"
+                ? "bg-accent-subtle text-accent-text dark:bg-accent/15"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

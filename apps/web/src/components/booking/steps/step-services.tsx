@@ -132,7 +132,7 @@ export function StepServices({
       {suggested.length > 0 ? (
         <div className="mb-7">
           <p className="mb-3 flex items-center gap-2 font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">
-            <Sparkles aria-hidden size={14} className="text-accent" />
+            <Sparkles aria-hidden size={14} className="text-accent-text" />
             Based on what you told us
           </p>
           <div role="group" aria-label="Suggested services" className="grid gap-2">

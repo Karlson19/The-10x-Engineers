@@ -87,7 +87,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Cannot get in?{" "}
             <a
               href={`tel:${BUSINESS.phoneHref}`}
-              className="font-mono text-foreground underline decoration-accent decoration-2 underline-offset-4"
+              className="font-mono text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
             >
               Ring {BUSINESS.phone}
             </a>

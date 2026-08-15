@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Check, MapPin, Phone } from "lucide-react";
+import { ArrowRight, MapPin, Phone } from "lucide-react";
 import { BUSINESS, SECTION_LABELS, SECTIONS, type Section } from "@chrysmec/shared";
 import { Logo } from "@/components/brand/logo";
-import { StageDial } from "@/components/brand/stage-dial";
+import { Hero } from "@/components/marketing/hero";
 import { PriceList } from "@/components/marketing/price-list";
 import { SiteHeader } from "@/components/shared/site-header";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const SECTION_COPY: Record<Section, { standfirst: string; work: readonly string[] }> = {
   MECHANICAL: {
@@ -54,64 +53,7 @@ export default function HomePage() {
       <SiteHeader />
 
       <main id="main" className="flex-1">
-        {/*
-          The hero sits on the brand blue rather than on the page. It is the one
-          full-bleed block of colour in the whole site, which is what stops the
-          shopfront reading as text on a blank page.
-        */}
-        <section className="paper-grain relative overflow-hidden bg-brand-surface text-brand-surface-foreground">
-          <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:items-center lg:gap-8 lg:py-28">
-            <div className="rise-in lg:col-span-7">
-              <p className="font-mono text-xs tracking-[0.16em] text-brand-surface-foreground/65 uppercase">
-                {BUSINESS.tagline}
-              </p>
-              <h1 className="mt-5 max-w-[15ch] font-display text-4xl font-semibold text-balance sm:text-5xl">
-                Your vehicle, handled by specialists.
-              </h1>
-              <p className="mt-6 max-w-xl text-lg text-brand-surface-foreground/80">
-                Tell us what the car is doing and we will tell you what it needs, what it costs, and
-                when it will be ready. No guesswork, no chasing us for an update.
-              </p>
-
-              {/* The three things the business actually sells, straight off the flier. */}
-              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
-                {BUSINESS.services.map((service) => (
-                  <li
-                    key={service}
-                    className="flex items-center gap-2 text-base text-brand-surface-foreground/90"
-                  >
-                    <Check aria-hidden size={18} className="shrink-0 text-accent-on-dark" />
-                    {service}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link href="/dashboard/book" className={buttonVariants({ variant: "accent" })}>
-                  Book a service
-                  <ArrowRight aria-hidden size={18} />
-                </Link>
-                <a
-                  href={phoneHref}
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "border-brand-surface-foreground/30 text-brand-surface-foreground hover:border-brand-surface-foreground/60 hover:bg-brand-surface-foreground/10",
-                  )}
-                >
-                  <Phone aria-hidden size={18} />
-                  {BUSINESS.phone}
-                </a>
-              </div>
-            </div>
-
-            <div
-              className="pointer-events-none relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none"
-              aria-hidden
-            >
-              <StageDial className="opacity-95" />
-            </div>
-          </div>
-        </section>
+        <Hero />
 
         {/* The branches, as a quiet strip under the hero. */}
         <section className="border-b border-border bg-muted/60">
@@ -146,7 +88,7 @@ export default function HomePage() {
                 className="grid gap-6 border-b border-border py-12 sm:py-16 lg:grid-cols-12 lg:gap-10"
               >
                 <div className="lg:col-span-4">
-                  <span className="font-mono text-sm text-accent">
+                  <span className="font-mono text-sm text-accent-text">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <h3 className="mt-2 font-display text-2xl font-semibold text-foreground">
@@ -237,7 +179,7 @@ export default function HomePage() {
               </address>
               <a
                 href={phoneHref}
-                className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+                className="mt-6 inline-flex min-h-11 items-center gap-2 font-mono text-base text-foreground underline decoration-accent-text decoration-2 underline-offset-[6px] hover:decoration-foreground"
               >
                 <Phone aria-hidden size={16} />
                 {BUSINESS.phone}

@@ -186,7 +186,7 @@ export function StatusTimeline({
                   </time>
                 ) : null}
                 {step.state === "current" ? (
-                  <span className="font-mono text-xs tracking-[0.12em] text-accent-hover uppercase dark:text-accent">
+                  <span className="font-mono text-xs tracking-[0.12em] text-accent-text uppercase">
                     Now
                   </span>
                 ) : null}

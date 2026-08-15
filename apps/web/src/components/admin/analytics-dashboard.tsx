@@ -222,7 +222,7 @@ export function AnalyticsDashboard() {
                         key={service.id}
                         className="flex items-center gap-4 border-b border-border py-3 last:border-b-0"
                       >
-                        <span className="font-mono text-sm text-accent">
+                        <span className="font-mono text-sm text-accent-text">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -250,7 +250,7 @@ export function AnalyticsDashboard() {
                 </h2>
                 <Link
                   href="/admin/inventory"
-                  className="inline-flex min-h-11 items-center text-base text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+                  className="inline-flex min-h-11 items-center text-base text-foreground underline decoration-accent-text decoration-2 underline-offset-[6px] hover:decoration-foreground"
                 >
                   Open the stock list
                 </Link>

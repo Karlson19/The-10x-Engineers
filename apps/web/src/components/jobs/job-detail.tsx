@@ -213,7 +213,7 @@ export function JobDetail({ jobId }: { jobId: string }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${serviceRequest.data.latitude},${serviceRequest.data.longitude}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex min-h-11 items-center gap-1.5 font-mono text-sm text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                    className="inline-flex min-h-11 items-center gap-1.5 font-mono text-sm text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
                   >
                     <MapPin aria-hidden size={15} />
                     Directions

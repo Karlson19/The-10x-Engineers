@@ -151,7 +151,7 @@ export function VehicleSilhouette({
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className={cn("text-accent", animate && "car-glint")}
+          className={cn("text-accent-text", animate && "car-glint")}
         />
       </svg>
     </div>

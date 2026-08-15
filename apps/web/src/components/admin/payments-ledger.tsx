@@ -144,7 +144,7 @@ export function PaymentsLedger() {
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                         <Link
                           href={`/dashboard/requests/${payment.serviceRequestId}`}
-                          className="font-mono text-sm text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+                          className="font-mono text-sm text-foreground underline decoration-accent-text decoration-2 underline-offset-[6px] hover:decoration-foreground"
                         >
                           {payment.requestReference}
                         </Link>

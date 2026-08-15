@@ -117,7 +117,7 @@ export default function AdminRequestsPage() {
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                           <Link
                             href={`/dashboard/requests/${serviceRequest.id}`}
-                            className="font-mono text-sm text-foreground underline decoration-accent decoration-2 underline-offset-[6px] hover:decoration-foreground"
+                            className="font-mono text-sm text-foreground underline decoration-accent-text decoration-2 underline-offset-[6px] hover:decoration-foreground"
                           >
                             {serviceRequest.reference}
                           </Link>
@@ -125,7 +125,7 @@ export default function AdminRequestsPage() {
                             {meta.label}
                           </Badge>
                           {isUnassigned ? (
-                            <span className="font-mono text-xs tracking-[0.1em] text-accent-hover uppercase dark:text-accent">
+                            <span className="font-mono text-xs tracking-[0.1em] text-accent-text uppercase">
                               Nobody assigned
                             </span>
                           ) : null}

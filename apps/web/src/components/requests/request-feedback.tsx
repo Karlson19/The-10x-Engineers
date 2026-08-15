@@ -25,7 +25,7 @@ function Stars({ value, className }: { value: number; className?: string }) {
           key={rating}
           size={20}
           className={
-            rating <= value ? "fill-accent text-accent" : "fill-transparent text-muted-foreground/50"
+            rating <= value ? "fill-accent-text text-accent-text" : "fill-transparent text-muted-foreground/50"
           }
         />
       ))}
@@ -174,7 +174,7 @@ export function RequestFeedback({ requestId }: { requestId: string }) {
                     size={28}
                     className={
                       value <= shown
-                        ? "fill-accent text-accent"
+                        ? "fill-accent-text text-accent-text"
                         : "fill-transparent text-muted-foreground/50"
                     }
                   />

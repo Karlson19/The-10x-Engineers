@@ -299,7 +299,7 @@ export function BookingWizard() {
                   className={cn(
                     "min-h-9 rounded-md px-2 font-mono text-xs tracking-[0.1em] uppercase transition-colors",
                     isCurrent && "text-foreground",
-                    isDone && "text-muted-foreground underline decoration-accent decoration-2 underline-offset-4 hover:text-foreground",
+                    isDone && "text-muted-foreground underline decoration-accent-text decoration-2 underline-offset-4 hover:text-foreground",
                     !isDone && !isCurrent && "text-muted-foreground/50",
                   )}
                 >

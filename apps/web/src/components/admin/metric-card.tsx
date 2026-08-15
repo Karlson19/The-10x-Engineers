@@ -79,7 +79,7 @@ export function MetricCard({
           aria-hidden
           size={18}
           className={cn(
-            tone === "accent" && "text-accent",
+            tone === "accent" && "text-accent-text",
             tone === "warning" && "text-warning",
             tone === "default" && "text-muted-foreground",
           )}

@@ -145,7 +145,7 @@ export function NotificationBell() {
                   <button
                     type="button"
                     onClick={() => void notifications.refetch()}
-                    className="mt-2 min-h-9 font-medium text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                    className="mt-2 min-h-9 font-medium text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
                   >
                     Try again
                   </button>

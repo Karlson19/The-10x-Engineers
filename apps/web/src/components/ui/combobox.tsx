@@ -290,7 +290,7 @@ export function Combobox({
                   </span>
 
                   {isSelected ? (
-                    <Check aria-hidden size={18} className="shrink-0 text-accent" />
+                    <Check aria-hidden size={18} className="shrink-0 text-accent-text" />
                   ) : null}
                 </li>
               );

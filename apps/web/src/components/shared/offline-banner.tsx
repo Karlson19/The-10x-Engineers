@@ -31,7 +31,7 @@ export function OfflineBanner() {
           className={
             showOffline
               ? "sticky top-0 z-50 flex items-center justify-center gap-2 bg-foreground px-4 py-2 text-sm text-background"
-              : "sticky top-0 z-50 flex items-center justify-center gap-2 bg-accent-subtle px-4 py-2 text-sm text-accent-hover dark:bg-accent/20 dark:text-accent"
+              : "sticky top-0 z-50 flex items-center justify-center gap-2 bg-accent-subtle px-4 py-2 text-sm text-accent-text dark:bg-accent/20"
           }
         >
           {showOffline ? (

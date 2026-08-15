@@ -179,7 +179,7 @@ export function ClientHome() {
                     progress.{" "}
                     <Link
                       href="/dashboard/requests"
-                      className="text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                      className="text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
                     >
                       See all
                     </Link>

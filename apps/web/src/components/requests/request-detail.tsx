@@ -86,7 +86,7 @@ export function RequestDetail({ id }: { id: string }) {
         />
         <Link
           href="/dashboard/requests"
-          className="mt-6 inline-flex items-center gap-2 text-base text-foreground underline decoration-accent decoration-2 underline-offset-4"
+          className="mt-6 inline-flex items-center gap-2 text-base text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
         >
           <ArrowLeft aria-hidden size={18} />
           Back to my requests

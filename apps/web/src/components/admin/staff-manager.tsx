@@ -248,7 +248,7 @@ export function StaffManager() {
                       </p>
                       <a
                         href={`tel:${person.phone}`}
-                        className="mt-0.5 inline-flex min-h-11 items-center font-mono text-sm text-foreground underline decoration-accent decoration-2 underline-offset-4"
+                        className="mt-0.5 inline-flex min-h-11 items-center font-mono text-sm text-foreground underline decoration-accent-text decoration-2 underline-offset-4"
                       >
                         {person.phone}
                       </a>

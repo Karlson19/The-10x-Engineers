@@ -9,7 +9,7 @@ const badgeVariants = cva(
     variants: {
       tone: {
         neutral: "bg-muted text-muted-foreground",
-        current: "bg-accent-subtle text-accent-hover dark:text-accent",
+        current: "bg-accent-subtle text-accent-text",
         done: "bg-primary/10 text-primary dark:bg-primary/25 dark:text-primary-foreground",
         stopped: "bg-destructive/10 text-destructive",
       },
