@@ -15,17 +15,19 @@ import { ToastProvider } from "@/components/ui/toast";
  * the session it had just established and restored an older one from the
  * refresh cookie, which is how people ended up in the wrong account.
  *
- * Order matters. The offline provider raises toasts when the queue drains and
- * invalidates queries once bookings land, so it sits inside both.
+ * Order matters. Toasts are outermost because the query client raises one when
+ * a mutation fails with nobody to catch it, so it has to be able to reach them.
+ * The offline provider raises toasts when the queue drains and invalidates
+ * queries once bookings land, so it sits inside both.
  */
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <QueryProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <QueryProvider>
         <AuthProvider>
           <OfflineProvider>{children}</OfflineProvider>
         </AuthProvider>
-      </ToastProvider>
-    </QueryProvider>
+      </QueryProvider>
+    </ToastProvider>
   );
 }

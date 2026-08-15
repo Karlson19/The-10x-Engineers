@@ -23,6 +23,7 @@ export function useCreateCatalogueItem() {
 
   return useMutation({
     mutationFn: (input: CreateServiceCatalogItem) => createCatalogueItem(input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: CATALOGUE_KEY });
     },
@@ -35,6 +36,7 @@ export function useUpdateCatalogueItem() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateServiceCatalogItem }) =>
       updateCatalogueItem(id, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: CATALOGUE_KEY });
     },
@@ -46,6 +48,7 @@ export function useRetireCatalogueItem() {
 
   return useMutation({
     mutationFn: (id: string) => retireCatalogueItem(id),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: CATALOGUE_KEY });
     },

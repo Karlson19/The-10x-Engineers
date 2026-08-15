@@ -33,6 +33,7 @@ export function useCreateInventoryItem() {
 
   return useMutation({
     mutationFn: (input: CreateInventoryItem) => createInventoryItem(input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: INVENTORY_KEY });
     },
@@ -45,6 +46,7 @@ export function useUpdateInventoryItem() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateInventoryItem }) =>
       updateInventoryItem(id, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: INVENTORY_KEY });
     },
@@ -56,6 +58,7 @@ export function useReceiveStock() {
 
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: ReceiveStock }) => receiveStock(id, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: INVENTORY_KEY });
     },

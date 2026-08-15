@@ -15,6 +15,7 @@ export function useCreateVehicle() {
 
   return useMutation({
     mutationFn: (input: CreateVehicleRequest) => createVehicle(input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: VEHICLES_KEY });
     },
@@ -27,6 +28,7 @@ export function useUpdateVehicle() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateVehicleRequest }) =>
       updateVehicle(id, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: VEHICLES_KEY });
     },
@@ -38,6 +40,7 @@ export function useDeleteVehicle() {
 
   return useMutation({
     mutationFn: (id: string) => deleteVehicle(id),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: VEHICLES_KEY });
     },

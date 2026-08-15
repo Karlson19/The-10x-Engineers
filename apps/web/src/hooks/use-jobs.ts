@@ -48,6 +48,7 @@ export function useCreateJob() {
 
   return useMutation({
     mutationFn: (input: CreateJob) => createJob(input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: JOBS_KEY });
       void queryClient.invalidateQueries({ queryKey: ["service-requests"] });
@@ -60,6 +61,7 @@ export function useUpdateJob(jobId: string) {
 
   return useMutation({
     mutationFn: (input: UpdateJob) => updateJob(jobId, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: JOBS_KEY });
     },
@@ -71,6 +73,7 @@ export function useAddWorkLogEntry(jobId: string) {
 
   return useMutation({
     mutationFn: (input: CreateWorkLogEntry) => addWorkLogEntry(jobId, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "worklog", jobId] });
       void queryClient.invalidateQueries({ queryKey: [...JOBS_KEY, "detail", jobId] });
@@ -88,6 +91,7 @@ export function useRemoveWorkLogEntry(jobId: string) {
 
   return useMutation({
     mutationFn: (entryId: string) => removeWorkLogEntry(jobId, entryId),
+    meta: { inlineError: true },
 
     /*
       The line goes the moment it is confirmed, and the running total with it.

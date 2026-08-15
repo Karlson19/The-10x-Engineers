@@ -24,6 +24,7 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: (input: CreateUserRequest) => createUser(input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: USERS_KEY });
     },
@@ -35,6 +36,7 @@ export function useUpdateUser() {
 
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateUserRequest }) => updateUser(id, input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: USERS_KEY });
     },
@@ -46,6 +48,7 @@ export function useDeactivateUser() {
 
   return useMutation({
     mutationFn: (id: string) => deactivateUser(id),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: USERS_KEY });
     },

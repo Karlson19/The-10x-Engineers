@@ -15,6 +15,7 @@ export function usePayments(serviceRequestId?: string) {
 export function useInitializePayment() {
   return useMutation({
     mutationFn: (serviceRequestId: string) => initializePayment(serviceRequestId),
+    meta: { inlineError: true },
   });
 }
 
@@ -23,6 +24,7 @@ export function useConfirmPayment() {
 
   return useMutation({
     mutationFn: (reference: string) => confirmPayment(reference),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: PAYMENTS_KEY });
       // A settled payment changes the bill and the management figures.

@@ -91,6 +91,7 @@ export function useLeaveFeedback(id: string) {
 
   return useMutation({
     mutationFn: (input: CreateFeedback) => leaveFeedback(id, input),
+    meta: { inlineError: true },
     onSuccess(feedback) {
       queryClient.setQueryData([...REQUESTS_KEY, "feedback", id], feedback);
     },
@@ -112,6 +113,7 @@ export function useCreateServiceRequest() {
 
   return useMutation({
     mutationFn: (input: CreateServiceRequest) => createServiceRequest(input),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: REQUESTS_KEY });
       void queryClient.invalidateQueries({ queryKey: ["vehicles"] });
@@ -129,6 +131,7 @@ export function useUpdateServiceRequestStatus(id: string) {
 
   return useMutation({
     mutationFn: (input: UpdateStatusRequest) => updateServiceRequestStatus(id, input),
+    meta: { inlineError: true },
 
     /*
       The badge moves the moment the button is pressed rather than after the
@@ -175,6 +178,7 @@ export function useDeleteServiceRequest() {
 
   return useMutation({
     mutationFn: (id: string) => deleteServiceRequest(id),
+    meta: { inlineError: true },
     onSuccess() {
       void queryClient.invalidateQueries({ queryKey: REQUESTS_KEY });
     },
