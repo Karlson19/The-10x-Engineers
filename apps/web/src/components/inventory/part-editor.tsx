@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { useCreateInventoryItem, useUpdateInventoryItem } from "@/hooks/use-inventory";
 import { ApiError } from "@/lib/api/client";
+import { formatCurrency } from "@/lib/format";
 
 type Draft = {
   name: string;
@@ -103,18 +104,29 @@ export function PartEditor({
       name: draft.name.trim(),
       sku: draft.sku.trim().toUpperCase(),
       section: draft.section,
-      quantityInStock: quantity,
-      unitCost: draft.unitCost.trim(),
       reorderLevel: reorder,
       imageUrl: draft.imageUrl.trim() || null,
     };
 
     try {
       if (item) {
+        /*
+          The count and the cost are not sent on an edit. They are the result of
+          what has been received and used, so they are changed by booking a
+          delivery in or posting a stock take correction, both of which leave a
+          record. Typing over them here would put the shelf and its ledger out
+          of step with nothing to explain why.
+        */
         await updateItem.mutateAsync({ id: item.id, input: payload });
         showToast({ tone: "success", title: "Part updated", body: `${payload.name} saved.` });
       } else {
-        await createItem.mutateAsync(payload);
+        // Creating does carry them: they become the opening receipt, which is
+        // the first row of this part's ledger.
+        await createItem.mutateAsync({
+          ...payload,
+          quantityInStock: quantity,
+          unitCost: draft.unitCost.trim(),
+        });
         showToast({
           tone: "success",
           title: "Part added",
@@ -213,38 +225,65 @@ export function PartEditor({
           )}
         </FormField>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="partCost" label="Unit cost" error={fieldErrors.unitCost}>
-            {(field) => (
-              <Input
-                {...field}
-                inputMode="decimal"
-                value={draft.unitCost}
-                placeholder="180.00"
-                onChange={(event) => setDraft({ ...draft, unitCost: event.target.value })}
-              />
-            )}
-          </FormField>
+        {/*
+          Opening stock, and only when the part is new. On an existing part
+          these are the result of what has been received and used, so they are
+          shown as figures rather than fields: changing them goes through
+          booking a delivery in or a stock take, both of which leave a record of
+          who did it and why.
+        */}
+        {item ? (
+          <div className="rounded-lg border border-border bg-muted/50 p-4">
+            <p className="font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">
+              Stock and cost
+            </p>
+            <p className="mt-1.5 text-base text-foreground">
+              {item.quantityInStock} on the shelf, worth{" "}
+              <span className="font-mono">{formatCurrency(item.unitCost)}</span> each on average.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Book a delivery in to add stock at the price you paid, or post a stock take to
+              correct the count. Both are kept on the history for this part.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              id="partCost"
+              label="Price paid for each one"
+              error={fieldErrors.unitCost}
+            >
+              {(field) => (
+                <Input
+                  {...field}
+                  inputMode="decimal"
+                  value={draft.unitCost}
+                  placeholder="180.00"
+                  onChange={(event) => setDraft({ ...draft, unitCost: event.target.value })}
+                />
+              )}
+            </FormField>
 
-          <FormField
-            id="partQuantity"
-            label="On the shelf"
-            error={fieldErrors.quantityInStock}
-          >
-            {(field) => (
-              <Input
-                {...field}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={draft.quantityInStock}
-                onChange={(event) =>
-                  setDraft({ ...draft, quantityInStock: event.target.value })
-                }
-              />
-            )}
-          </FormField>
-        </div>
+            <FormField
+              id="partQuantity"
+              label="Opening stock"
+              error={fieldErrors.quantityInStock}
+            >
+              {(field) => (
+                <Input
+                  {...field}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={draft.quantityInStock}
+                  onChange={(event) =>
+                    setDraft({ ...draft, quantityInStock: event.target.value })
+                  }
+                />
+              )}
+            </FormField>
+          </div>
+        )}
 
         <FormField
           id="partReorder"

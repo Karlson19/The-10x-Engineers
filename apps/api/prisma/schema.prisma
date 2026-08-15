@@ -51,21 +51,22 @@ enum PaymentStatus {
 }
 
 model User {
-  id           String    @id @default(uuid())
+  id           String   @id @default(uuid())
   fullName     String
-  email        String    @unique
+  email        String   @unique
   phone        String
   passwordHash String
-  role         Role      @default(CLIENT)
+  role         Role     @default(CLIENT)
   section      Section?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   vehicles        Vehicle[]
   serviceRequests ServiceRequest[] @relation("ClientRequests")
   assignedJobs    Job[]            @relation("StaffJobs")
   notifications   Notification[]
+  stockMovements  StockMovement[]  @relation("RecordedStockMovements")
 
   @@index([role])
 }
@@ -127,20 +128,21 @@ model Job {
   workSummary      String?
   createdAt        DateTime  @default(now())
 
-  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
-  assignedStaff  User           @relation("StaffJobs", fields: [assignedStaffId], references: [id])
+  serviceRequest ServiceRequest  @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  assignedStaff  User            @relation("StaffJobs", fields: [assignedStaffId], references: [id])
   workLog        WorkLogEntry[]
+  stockMovements StockMovement[]
 
   @@index([assignedStaffId])
 }
 
 model ServiceCatalogItem {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String
   section     Section
-  basePrice   Decimal  @db.Decimal(10, 2)
-  isActive    Boolean  @default(true)
+  basePrice   Decimal @db.Decimal(10, 2)
+  isActive    Boolean @default(true)
 
   requestedServices RequestedService[]
 }
@@ -161,7 +163,15 @@ model InventoryItem {
   name            String
   sku             String  @unique
   section         Section
+  /// What is on the shelf. A cached total: every change to it is written as a
+  /// StockMovement in the same transaction, and the ledger is what can be
+  /// audited. Kept on the row because the low stock report and the parts picker
+  /// both need it on every read, and replaying the ledger for that would be
+  /// wasteful.
   quantityInStock Int     @default(0)
+  /// What a unit is worth today, held as the weighted average of what is
+  /// actually on the shelf. Recalculated on every receipt rather than typed in,
+  /// so it cannot drift from what was paid.
   unitCost        Decimal @db.Decimal(10, 2)
   reorderLevel    Int     @default(5)
   /// A photograph of the part. Either one shipped with the app under /parts, or
@@ -169,6 +179,65 @@ model InventoryItem {
   imageUrl        String?
 
   workLogEntries WorkLogEntry[]
+  stockMovements StockMovement[]
+}
+
+enum StockMovementType {
+  /// Stock bought in, carrying what was paid for it.
+  RECEIPT
+  /// Taken out of stock for a job.
+  CONSUMPTION
+  /// A work log line was removed, so the part went back on the shelf.
+  RETURN
+  /// A stock take correction, breakage or write off.
+  ADJUSTMENT
+}
+
+/// Every movement of stock, in or out, as an immutable row.
+///
+/// This is the record the workshop is actually run from. Without it the only
+/// thing stored was a running total that could be changed with no explanation:
+/// a restock recorded no price, so what a part cost over time was unknowable,
+/// and a discrepancy at a stock take could never be traced to what caused it.
+///
+/// Rows are never updated or deleted. A mistake is corrected by posting the
+/// opposite movement, so the history stays honest.
+model StockMovement {
+  id              String            @id @default(uuid())
+  inventoryItemId String
+  type            StockMovementType
+  /// Signed. Positive puts stock on the shelf, negative takes it off.
+  quantity        Int
+  /// What one unit was worth for this movement. On a receipt it is what was
+  /// paid, which is what makes price history possible. On a consumption it is
+  /// the weighted average at the moment it was taken, so the job is costed at
+  /// what that stock actually cost rather than at a later price.
+  unitCost        Decimal           @db.Decimal(10, 2)
+  /// The shelf count after this movement, so a stock take can be reconciled at
+  /// any point without replaying everything before it.
+  balanceAfter    Int
+  /// Supplier invoice number on a receipt, stock take reference on an
+  /// adjustment.
+  reference       String?
+  note            String?
+  /// Which supplier it was bought from, on a receipt.
+  supplier        String?
+  /// The job it went out on, when it left for one.
+  jobId           String?
+  /// Set on a consumption so removing the work log line can find its movement
+  /// and post the matching return.
+  workLogEntryId  String?
+  /// Who posted it. Stock is money, so every movement has a name against it.
+  recordedById    String?
+  createdAt       DateTime          @default(now())
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  job           Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  recordedBy    User?         @relation("RecordedStockMovements", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([inventoryItemId, createdAt])
+  @@index([type])
+  @@index([jobId])
 }
 
 model WorkLogEntry {
@@ -224,12 +293,12 @@ model Feedback {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
   title     String
   body      String
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

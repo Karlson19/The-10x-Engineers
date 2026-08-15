@@ -50,10 +50,10 @@ async function revenueByMonth(from: Date, to: Date): Promise<MonthlyPoint[]> {
     `,
     prisma.$queryRaw<MonthlyTotalRow[]>`
       SELECT to_char(date_trunc('month', j."completedAt" AT TIME ZONE 'UTC'), 'YYYY-MM') AS month,
-             SUM(w."unitCost" * w."quantity") AS total
-      FROM "WorkLogEntry" w
-      JOIN "Job" j ON j."id" = w."jobId"
-      WHERE w."lineType" = 'PART'
+             SUM(-m."unitCost" * m."quantity") AS total
+      FROM "StockMovement" m
+      JOIN "Job" j ON j."id" = m."jobId"
+      WHERE m."type" IN ('CONSUMPTION', 'RETURN')
         AND j."completedAt" IS NOT NULL
         AND j."completedAt" >= ${from} AND j."completedAt" < ${to}
       GROUP BY 1
@@ -107,13 +107,20 @@ export async function getAnalyticsSummary(period: string | undefined): Promise<A
       where: { status: "SUCCESS", ...inPeriod },
       _sum: { amount: true },
     }),
-    // Parts on work finished in the period, so this sits against the revenue
-    // for the same work rather than against jobs nobody has paid for yet.
+    /*
+      Parts on work finished in the period, so this sits against the revenue
+      for the same work rather than against jobs nobody has paid for yet.
+
+      Taken from the stock ledger rather than the work log, because the ledger
+      is what actually left the shelf: a line that was added and then removed
+      nets to nothing here, which is correct, where counting the work log alone
+      would have charged the job for a part that went back.
+    */
     prisma.$queryRaw<Array<{ total: Prisma.Decimal | null }>>`
-      SELECT SUM(w."unitCost" * w."quantity") AS total
-      FROM "WorkLogEntry" w
-      JOIN "Job" j ON j."id" = w."jobId"
-      WHERE w."lineType" = 'PART'
+      SELECT COALESCE(SUM(-m."unitCost" * m."quantity"), 0) AS total
+      FROM "StockMovement" m
+      JOIN "Job" j ON j."id" = m."jobId"
+      WHERE m."type" IN ('CONSUMPTION', 'RETURN')
         AND j."completedAt" IS NOT NULL
         AND j."completedAt" >= ${start} AND j."completedAt" < ${end}
     `,

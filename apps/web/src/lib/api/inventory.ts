@@ -1,12 +1,16 @@
 import { z } from "zod";
 import {
+  type AdjustStock,
   type CreateInventoryItem,
   type InventoryItem,
   type InventoryListResponse,
+  type ReceiveStock,
   type Section,
+  type StockHistoryResponse,
   type UpdateInventoryItem,
   inventoryItemSchema,
   inventoryListResponseSchema,
+  stockHistoryResponseSchema,
 } from "@chrysmec/shared";
 import { apiRequest } from "./client";
 
@@ -40,11 +44,31 @@ export async function updateInventoryItem(
   ).item;
 }
 
-export async function restockInventoryItem(id: string, quantity: number): Promise<InventoryItem> {
+/**
+ * Stock arriving, with what was paid for it. This replaced a restock that took
+ * a quantity and nothing else, which is why the price of a part over time could
+ * never be answered.
+ */
+export async function receiveStock(id: string, input: ReceiveStock): Promise<InventoryItem> {
   return (
-    await apiRequest(`/inventory/${id}/restock`, itemResponseSchema, {
+    await apiRequest(`/inventory/${id}/receive`, itemResponseSchema, {
       method: "POST",
-      body: { quantity },
+      body: input,
     })
   ).item;
+}
+
+/** A stock take correction, which has to carry a reason. */
+export async function adjustStock(id: string, input: AdjustStock): Promise<InventoryItem> {
+  return (
+    await apiRequest(`/inventory/${id}/adjust`, itemResponseSchema, {
+      method: "POST",
+      body: input,
+    })
+  ).item;
+}
+
+/** Everything that has happened to a part, and what it has cost. */
+export function fetchStockHistory(id: string): Promise<StockHistoryResponse> {
+  return apiRequest(`/inventory/${id}/history`, stockHistoryResponseSchema);
 }

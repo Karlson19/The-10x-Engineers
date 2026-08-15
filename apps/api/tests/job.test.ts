@@ -443,6 +443,141 @@ describe("the estimate and approval loop", () => {
   });
 });
 
+describe("the stock ledger", () => {
+  /** A part of its own per test, so counts cannot be disturbed by neighbours. */
+  async function createPart(unitCost: string, quantity: number) {
+    const created = await request(app)
+      .post("/api/v1/inventory")
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({
+        name: `Ledger test part ${randomUUID().slice(0, 8)}`,
+        // Carries the marker so afterAll clears it with everything else.
+        sku: `${TEST_SKU_MARKER}-${randomUUID().slice(0, 8).toUpperCase()}`,
+        section: "MECHANICAL",
+        quantityInStock: quantity,
+        unitCost,
+        reorderLevel: 1,
+      });
+
+    expect(created.status).toBe(201);
+    return created.body.item.id as string;
+  }
+
+  it("records what was paid, so a part has a price history", async () => {
+    const id = await createPart("100.00", 10);
+
+    const received = await request(app)
+      .post(`/api/v1/inventory/${id}/receive`)
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({ quantity: 10, unitCost: "200.00", supplier: "Adum Auto Spares", reference: "INV-1" });
+
+    expect(received.status).toBe(200);
+
+    const history = await request(app)
+      .get(`/api/v1/inventory/${id}/history`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    expect(history.status).toBe(200);
+    expect(history.body.summary.lastPaid).toBe("200.00");
+    expect(history.body.summary.onHand).toBe(20);
+
+    // Ten at 100 and ten at 200 is 150 on average, which is the figure a job
+    // should be costed at rather than either price on its own.
+    expect(history.body.summary.averageUnitCost).toBe("150.00");
+    expect(history.body.summary.totalPurchased).toBe("3000.00");
+
+    const receipts = (history.body.movements as Array<{ type: string; supplier: string | null }>)
+      .filter((movement) => movement.type === "RECEIPT");
+    expect(receipts).toHaveLength(2);
+    expect(receipts[0].supplier).toBe("Adum Auto Spares");
+  });
+
+  it("writes a movement when a part goes out on a job, and when it comes back", async () => {
+    const id = await createPart("50.00", 5);
+    const serviceRequestId = await createBooking();
+    const jobId = await assignJob(serviceRequestId, mechanic.id);
+
+    const added = await request(app)
+      .post(`/api/v1/jobs/${jobId}/worklog`)
+      .set("Authorization", `Bearer ${mechanicToken}`)
+      .send({ lineType: "PART", inventoryItemId: id, quantity: 2 });
+
+    expect(added.status).toBe(201);
+
+    const afterUse = await request(app)
+      .get(`/api/v1/inventory/${id}/history`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    expect(afterUse.body.summary.onHand).toBe(3);
+    const consumption = afterUse.body.movements[0];
+    expect(consumption.type).toBe("CONSUMPTION");
+    expect(consumption.quantity).toBe(-2);
+    expect(consumption.balanceAfter).toBe(3);
+
+    await request(app)
+      .delete(`/api/v1/jobs/${jobId}/worklog/${added.body.entry.id}`)
+      .set("Authorization", `Bearer ${mechanicToken}`);
+
+    const afterReturn = await request(app)
+      .get(`/api/v1/inventory/${id}/history`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    expect(afterReturn.body.summary.onHand).toBe(5);
+
+    // The part going out stays on the record next to it coming back, rather
+    // than the history pretending it never left.
+    const types = (afterReturn.body.movements as Array<{ type: string }>).map((m) => m.type);
+    expect(types).toContain("CONSUMPTION");
+    expect(types).toContain("RETURN");
+  });
+
+  it("makes a stock take correction explain itself", async () => {
+    const id = await createPart("40.00", 12);
+
+    const noReason = await request(app)
+      .post(`/api/v1/inventory/${id}/adjust`)
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({ countedQuantity: 9 });
+
+    expect(noReason.status).toBe(400);
+
+    const counted = await request(app)
+      .post(`/api/v1/inventory/${id}/adjust`)
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({ countedQuantity: 9, reason: "Two damaged, one unaccounted for" });
+
+    expect(counted.status).toBe(200);
+    expect(counted.body.item.quantityInStock).toBe(9);
+
+    const history = await request(app)
+      .get(`/api/v1/inventory/${id}/history`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    const adjustment = history.body.movements[0];
+    expect(adjustment.type).toBe("ADJUSTMENT");
+    expect(adjustment.quantity).toBe(-3);
+    expect(adjustment.note).toBe("Two damaged, one unaccounted for");
+  });
+
+  it("refuses to let the count be typed over", async () => {
+    const id = await createPart("60.00", 4);
+
+    await request(app)
+      .patch(`/api/v1/inventory/${id}`)
+      .set("Authorization", `Bearer ${managementToken}`)
+      .send({ quantityInStock: 999, unitCost: "1.00" });
+
+    const history = await request(app)
+      .get(`/api/v1/inventory/${id}/history`)
+      .set("Authorization", `Bearer ${managementToken}`);
+
+    // The edit route simply has nowhere to put these, so the shelf and its
+    // ledger cannot be pushed out of step by hand.
+    expect(history.body.summary.onHand).toBe(4);
+    expect(history.body.summary.averageUnitCost).toBe("60.00");
+  });
+});
+
 describe("inventory", () => {
   it("shows a technician only their own section, read only", async () => {
     const listed = await request(app)

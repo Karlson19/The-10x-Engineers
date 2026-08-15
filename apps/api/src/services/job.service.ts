@@ -14,6 +14,7 @@ import { logger } from "../lib/logger";
 import { TRANSACTION_OPTIONS, prisma } from "../lib/prisma";
 import type { AuthenticatedUser } from "../types/auth";
 import { jobInclude, money, toJob, toWorkLogEntry, workLogTotal } from "./mappers";
+import { postMovement } from "./stock-ledger";
 
 const { Decimal } = Prisma;
 
@@ -311,31 +312,38 @@ export async function addWorkLogEntry(
       });
     }
 
-    // The condition is the lock. If someone else took the stock first this
-    // updates nothing and we refuse, rather than driving the count negative.
-    const claimed = await tx.inventoryItem.updateMany({
-      where: { id: inventoryItemId, quantityInStock: { gte: input.quantity } },
-      data: { quantityInStock: { decrement: input.quantity } },
-    });
-
-    if (claimed.count === 0) {
-      throw HttpError.insufficientStock(
-        `There are only ${item.quantityInStock} of ${item.name} left in stock.`,
-        { quantity: `Enter ${item.quantityInStock} or fewer.`, available: item.quantityInStock },
-      );
-    }
-
-    return tx.workLogEntry.create({
+    const entry = await tx.workLogEntry.create({
       data: {
         jobId,
         inventoryItemId,
         lineType: "PART",
+        // Priced at what the shelf is worth right now, which the ledger holds
+        // as the weighted average of what was actually paid for the stock on
+        // it. Frozen onto the line, so a later delivery at a different price
+        // cannot rewrite the cost of a job that is already done.
         description: input.description?.trim() || item.name,
         quantity: input.quantity,
-        // Priced at what the part actually costs the workshop today.
         unitCost: item.unitCost,
       },
     });
+
+    /*
+      Taking the part off the shelf is a ledger movement, not a bare decrement.
+      The movement carries the job it went out on and the value that left with
+      it, which is what makes the stock reconcilable afterwards. It also holds
+      the lock: the count is claimed conditionally inside postMovement, so two
+      technicians taking the last one cannot both succeed.
+    */
+    await postMovement(tx, {
+      inventoryItemId,
+      type: "CONSUMPTION",
+      quantity: -input.quantity,
+      jobId,
+      workLogEntryId: entry.id,
+      recordedById: user.id,
+    });
+
+    return entry;
   }, TRANSACTION_OPTIONS);
 
   const entries = await prisma.workLogEntry.findMany({ where: { jobId } });
@@ -377,9 +385,20 @@ export async function removeWorkLogEntry(
     await tx.workLogEntry.delete({ where: { id: entryId } });
 
     if (entry.lineType === "PART" && entry.inventoryItemId) {
-      await tx.inventoryItem.update({
-        where: { id: entry.inventoryItemId },
-        data: { quantityInStock: { increment: entry.quantity } },
+      /*
+        The part goes back as a movement of its own rather than by undoing the
+        one that took it. The original consumption stays on the ledger, so the
+        record shows that it went out and came back, which is the truth, rather
+        than pretending it never left.
+      */
+      await postMovement(tx, {
+        inventoryItemId: entry.inventoryItemId,
+        type: "RETURN",
+        quantity: entry.quantity,
+        note: "Work log line removed",
+        jobId,
+        workLogEntryId: entry.id,
+        recordedById: user.id,
       });
     }
   }, TRANSACTION_OPTIONS);

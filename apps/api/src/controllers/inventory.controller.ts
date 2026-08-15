@@ -1,22 +1,21 @@
 import type { RequestHandler } from "express";
-import { z } from "zod";
 import {
+  adjustStockSchema,
   createInventoryItemSchema,
   idParamSchema,
   inventoryListQuerySchema,
+  receiveStockSchema,
   updateInventoryItemSchema,
 } from "@chrysmec/shared";
 import { requireAuthUser } from "../middleware/authenticate";
 import {
+  adjustStock,
   createInventoryItem,
+  getStockHistory,
   listInventory,
-  restockInventoryItem,
+  receiveStock,
   updateInventoryItem,
 } from "../services/inventory.service";
-
-const restockSchema = z.object({
-  quantity: z.number().int().min(1, "Enter how many arrived.").max(100_000),
-});
 
 export const list: RequestHandler = async (req, res) => {
   const user = requireAuthUser(req);
@@ -26,9 +25,10 @@ export const list: RequestHandler = async (req, res) => {
 };
 
 export const create: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
   const input = createInventoryItemSchema.parse(req.body);
 
-  res.status(201).json({ item: await createInventoryItem(input) });
+  res.status(201).json({ item: await createInventoryItem(input, user.id) });
 };
 
 export const patch: RequestHandler = async (req, res) => {
@@ -38,9 +38,28 @@ export const patch: RequestHandler = async (req, res) => {
   res.status(200).json({ item: await updateInventoryItem(id, input) });
 };
 
-export const restock: RequestHandler = async (req, res) => {
+/** Stock arriving, with the price paid. This is what builds price history. */
+export const receive: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
   const { id } = idParamSchema.parse(req.params);
-  const { quantity } = restockSchema.parse(req.body);
+  const input = receiveStockSchema.parse(req.body);
 
-  res.status(200).json({ item: await restockInventoryItem(id, quantity) });
+  res.status(200).json({ item: await receiveStock(id, input, user.id) });
+};
+
+/** A stock take correction, which has to say what happened. */
+export const adjust: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
+  const { id } = idParamSchema.parse(req.params);
+  const input = adjustStockSchema.parse(req.body);
+
+  res.status(200).json({ item: await adjustStock(id, input, user.id) });
+};
+
+/** Everything that has happened to this part, and what it has cost. */
+export const history: RequestHandler = async (req, res) => {
+  const user = requireAuthUser(req);
+  const { id } = idParamSchema.parse(req.params);
+
+  res.status(200).json(await getStockHistory(user, id));
 };

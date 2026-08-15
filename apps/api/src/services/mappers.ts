@@ -8,6 +8,7 @@ import {
   type Job as JobDto,
   type ServiceRequest as ServiceRequestDto,
   type StatusEvent as StatusEventDto,
+  type StockMovement as StockMovementDto,
   type Vehicle as VehicleDto,
   type VehicleSummary,
   type WorkLogEntry as WorkLogEntryDto,
@@ -73,6 +74,37 @@ export function toInventoryItem(item: InventoryItem): InventoryItemDto {
     imageUrl: item.imageUrl,
     // Derived here so no screen has to remember the rule for itself.
     isLowStock: item.quantityInStock <= item.reorderLevel,
+  };
+}
+
+type StockMovementRow = Prisma.StockMovementGetPayload<{
+  include: {
+    recordedBy: { select: { id: true; fullName: true } };
+    job: { select: { id: true; serviceRequestId: true } };
+  };
+}>;
+
+/**
+ * One row of the stock ledger. The line value is worked out here so no screen
+ * ever multiplies money for itself, and the sign of the quantity is left as
+ * stored: negative means it left the shelf.
+ */
+export function toStockMovement(movement: StockMovementRow): StockMovementDto {
+  return {
+    id: movement.id,
+    type: movement.type,
+    quantity: movement.quantity,
+    unitCost: money(movement.unitCost),
+    lineValue: money(movement.unitCost.mul(Math.abs(movement.quantity))),
+    balanceAfter: movement.balanceAfter,
+    reference: movement.reference,
+    note: movement.note,
+    supplier: movement.supplier,
+    jobId: movement.jobId,
+    recordedBy: movement.recordedBy
+      ? { id: movement.recordedBy.id, fullName: movement.recordedBy.fullName }
+      : null,
+    createdAt: movement.createdAt.toISOString(),
   };
 }
 

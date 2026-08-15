@@ -1,15 +1,19 @@
 import { Prisma } from "@prisma/client";
 import type {
+  AdjustStock,
   CreateInventoryItem,
   InventoryItem,
   InventoryListQuery,
   PaginationMeta,
+  ReceiveStock,
+  StockHistoryResponse,
   UpdateInventoryItem,
 } from "@chrysmec/shared";
 import { HttpError } from "../lib/http-error";
-import { prisma } from "../lib/prisma";
+import { TRANSACTION_OPTIONS, prisma } from "../lib/prisma";
 import type { AuthenticatedUser } from "../types/auth";
-import { toInventoryItem } from "./mappers";
+import { toInventoryItem, toStockMovement } from "./mappers";
+import { postMovement } from "./stock-ledger";
 
 const { Decimal } = Prisma;
 
@@ -71,18 +75,42 @@ export async function listInventory(
   };
 }
 
-export async function createInventoryItem(input: CreateInventoryItem): Promise<InventoryItem> {
+export async function createInventoryItem(
+  input: CreateInventoryItem,
+  recordedById?: string,
+): Promise<InventoryItem> {
   try {
-    const item = await prisma.inventoryItem.create({
-      data: {
-        name: input.name,
-        sku: input.sku,
-        section: input.section,
-        quantityInStock: input.quantityInStock,
-        unitCost: new Decimal(input.unitCost),
-        reorderLevel: input.reorderLevel,
-      },
-    });
+    const item = await prisma.$transaction(async (tx) => {
+      const created = await tx.inventoryItem.create({
+        data: {
+          name: input.name,
+          sku: input.sku,
+          section: input.section,
+          // Starts empty and is put on the shelf by the opening movement below,
+          // so the very first stock this part ever had is on the ledger like
+          // everything after it.
+          quantityInStock: 0,
+          unitCost: new Decimal(input.unitCost),
+          reorderLevel: input.reorderLevel,
+          imageUrl: input.imageUrl ?? null,
+        },
+      });
+
+      if (input.quantityInStock > 0) {
+        await postMovement(tx, {
+          inventoryItemId: created.id,
+          type: "RECEIPT",
+          quantity: input.quantityInStock,
+          unitCost: new Decimal(input.unitCost),
+          note: "Opening stock",
+          supplier: input.supplier ?? null,
+          reference: input.reference ?? null,
+          recordedById: recordedById ?? null,
+        });
+      }
+
+      return tx.inventoryItem.findUniqueOrThrow({ where: { id: created.id } });
+    }, TRANSACTION_OPTIONS);
 
     return toInventoryItem(item);
   } catch (error) {
@@ -114,12 +142,13 @@ export async function updateInventoryItem(
   if (input.section !== undefined) {
     data.section = input.section;
   }
-  if (input.quantityInStock !== undefined) {
-    data.quantityInStock = input.quantityInStock;
-  }
-  if (input.unitCost !== undefined) {
-    data.unitCost = new Decimal(input.unitCost);
-  }
+  /*
+    The count and the cost are deliberately not editable here. They are the
+    result of what has been received and used, so typing over them would put
+    the item and its ledger out of step with no record of why. Stock arrives
+    through receiveStock, which takes the price paid, and a stock take
+    correction goes through adjustStock, which takes a reason.
+  */
   if (input.reorderLevel !== undefined) {
     data.reorderLevel = input.reorderLevel;
   }
@@ -136,17 +165,126 @@ export async function updateInventoryItem(
   }
 }
 
-/** Restocking is common enough to deserve its own operation. */
-export async function restockInventoryItem(id: string, quantity: number): Promise<InventoryItem> {
-  const existing = await prisma.inventoryItem.findUnique({ where: { id } });
-  if (!existing) {
+/**
+ * Stock arriving from a supplier.
+ *
+ * This used to take a quantity and nothing else, so what the workshop paid was
+ * never recorded anywhere and the price of a part over time could not be
+ * answered at all. It now takes the price, and optionally who it came from and
+ * the invoice it came on, and that is what builds the price history.
+ */
+export async function receiveStock(
+  id: string,
+  input: ReceiveStock,
+  recordedById?: string,
+): Promise<InventoryItem> {
+  const item = await prisma.$transaction(async (tx) => {
+    await postMovement(tx, {
+      inventoryItemId: id,
+      type: "RECEIPT",
+      quantity: input.quantity,
+      unitCost: new Decimal(input.unitCost),
+      supplier: input.supplier ?? null,
+      reference: input.reference ?? null,
+      note: input.note ?? null,
+      recordedById: recordedById ?? null,
+    });
+
+    return tx.inventoryItem.findUniqueOrThrow({ where: { id } });
+  }, TRANSACTION_OPTIONS);
+
+  return toInventoryItem(item);
+}
+
+/**
+ * A stock take correction, breakage or write off.
+ *
+ * The count is only ever wrong because something happened that nobody wrote
+ * down, so this insists on a reason. The correction is posted as its own
+ * movement rather than by editing the number, which means the discrepancy
+ * itself stays visible instead of being quietly tidied away.
+ */
+export async function adjustStock(
+  id: string,
+  input: AdjustStock,
+  recordedById?: string,
+): Promise<InventoryItem> {
+  const item = await prisma.$transaction(async (tx) => {
+    const existing = await tx.inventoryItem.findUnique({ where: { id } });
+    if (!existing) {
+      throw HttpError.notFound("We could not find that part.");
+    }
+
+    const difference = input.countedQuantity - existing.quantityInStock;
+
+    if (difference === 0) {
+      return existing;
+    }
+
+    await postMovement(tx, {
+      inventoryItemId: id,
+      type: "ADJUSTMENT",
+      quantity: difference,
+      note: input.reason,
+      reference: input.reference ?? null,
+      recordedById: recordedById ?? null,
+    });
+
+    return tx.inventoryItem.findUniqueOrThrow({ where: { id } });
+  }, TRANSACTION_OPTIONS);
+
+  return toInventoryItem(item);
+}
+
+/**
+ * What has happened to this part, newest first, and what it has cost over
+ * time. This is the answer to "we cannot track the prices": every receipt is
+ * here with the price paid and who it came from.
+ */
+export async function getStockHistory(
+  user: AuthenticatedUser,
+  id: string,
+): Promise<StockHistoryResponse> {
+  const item = await prisma.inventoryItem.findUnique({ where: { id } });
+  if (!item) {
     throw HttpError.notFound("We could not find that part.");
   }
 
-  const item = await prisma.inventoryItem.update({
-    where: { id },
-    data: { quantityInStock: { increment: quantity } },
+  // A technician may only look at their own section, the same rule the list
+  // itself follows.
+  if (user.role === "STAFF" && item.section !== user.section) {
+    throw HttpError.notFound("We could not find that part.");
+  }
+
+  const movements = await prisma.stockMovement.findMany({
+    where: { inventoryItemId: id },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: {
+      recordedBy: { select: { id: true, fullName: true } },
+      job: { select: { id: true, serviceRequestId: true } },
+    },
   });
 
-  return toInventoryItem(item);
+  const receipts = movements.filter((movement) => movement.type === "RECEIPT");
+
+  const purchased = receipts.reduce(
+    (total, movement) => total.add(movement.unitCost.mul(movement.quantity)),
+    new Decimal(0),
+  );
+  const purchasedUnits = receipts.reduce((total, movement) => total + movement.quantity, 0);
+
+  return {
+    item: toInventoryItem(item),
+    movements: movements.map(toStockMovement),
+    summary: {
+      onHand: item.quantityInStock,
+      valuation: item.unitCost.mul(Math.max(item.quantityInStock, 0)).toFixed(2),
+      averageUnitCost: item.unitCost.toFixed(2),
+      lastPaid: receipts[0] ? receipts[0].unitCost.toFixed(2) : null,
+      lastReceivedAt: receipts[0] ? receipts[0].createdAt.toISOString() : null,
+      totalPurchased: purchased.toFixed(2),
+      totalUnitsPurchased: purchasedUnits,
+    },
+  };
 }

@@ -347,6 +347,14 @@ const PART_IMAGES: Readonly<Record<string, string>> = {
   "MEC-BRK-PADR": "/parts/brake-pads.webp",
 };
 
+/** Who the workshop buys from, so a receipt has somewhere to have come from. */
+const SUPPLIERS: readonly string[] = [
+  "Adum Auto Spares",
+  "Suame Magazine Parts",
+  "Kumasi Motor Factors",
+  "Accra Parts Direct",
+];
+
 const LOCATIONS: readonly string[] = [
   "Chrysmec workshop, Kumasi",
   "Chrysmec workshop, Kumasi",
@@ -403,6 +411,7 @@ async function clearDatabase(): Promise<void> {
   await prisma.feedback.deleteMany();
   await prisma.statusEvent.deleteMany();
   await prisma.payment.deleteMany();
+  await prisma.stockMovement.deleteMany();
   await prisma.workLogEntry.deleteMany();
   await prisma.job.deleteMany();
   await prisma.requestedService.deleteMany();
@@ -589,6 +598,52 @@ async function main(): Promise<void> {
       }),
     ),
   );
+
+  /*
+    Two deliveries per part before any of it is used, at prices that moved
+    between them. Without this the price history screen would be a single row
+    and would demonstrate nothing: the point of the ledger is being able to see
+    that a part cost one thing in the spring and another by the summer.
+  */
+  console.error("Creating stock receipts");
+  for (const item of inventory) {
+    const opening = Math.max(Math.round(item.quantityInStock * 0.6), 1);
+    const topUp = item.quantityInStock - opening;
+    const paidFirst = Math.round(Number(item.unitCost) * 100 * 0.92);
+    const supplier = pick(SUPPLIERS);
+
+    await prisma.stockMovement.create({
+      data: {
+        inventoryItemId: item.id,
+        type: "RECEIPT",
+        quantity: opening,
+        unitCost: money(paidFirst),
+        balanceAfter: opening,
+        supplier,
+        reference: `INV-${1000 + Math.floor(random() * 8999)}`,
+        note: "Opening stock",
+        recordedById: management[0].id,
+        createdAt: daysAgo(150, 9, 0),
+      },
+    });
+
+    if (topUp > 0) {
+      await prisma.stockMovement.create({
+        data: {
+          inventoryItemId: item.id,
+          type: "RECEIPT",
+          quantity: topUp,
+          // The later delivery costs more, which is what the average is for.
+          unitCost: money(Math.round(Number(item.unitCost) * 100 * 1.08)),
+          balanceAfter: item.quantityInStock,
+          supplier,
+          reference: `INV-${1000 + Math.floor(random() * 8999)}`,
+          recordedById: management[0].id,
+          createdAt: daysAgo(60, 11, 30),
+        },
+      });
+    }
+  }
 
   /**
    * What is left on the shelf as the seed works through the jobs. The inventory
