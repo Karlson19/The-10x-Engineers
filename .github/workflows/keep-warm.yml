@@ -5,7 +5,7 @@ name: Keep the API warm
 # enough that a customer never lands on a cold start.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
