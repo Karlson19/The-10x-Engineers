@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { BUSINESS } from "@chrysmec/shared";
 import { AppProviders } from "@/components/providers/app-providers";
 import { MotionProvider } from "@/components/shared/motion-provider";
+import { ServiceWorkerRefresh } from "@/components/shared/service-worker-refresh";
 import { ThemeProvider, themeInitScript } from "@/components/shared/theme-provider";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               and restored the session all over again. That is what put people
               into the account the browser was last used with.
             */}
+            <ServiceWorkerRefresh />
             <AppProviders>{children}</AppProviders>
           </MotionProvider>
         </ThemeProvider>
